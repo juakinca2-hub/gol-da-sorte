@@ -42,23 +42,22 @@ function playSuccessSound() {
   });
 }
 
-// Each row: yStart, yEnd (fraction of image height), plus per-row ball x ranges
 // Index 0 = bottom row near JOGAR, game advances upward
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
 const ROWS: RowDef[] = [
   {
-    label: "R0-BOTTOM",
+    label: "R0",
     y: [0.760, 0.826],
     x: [[0.122, 0.287], [0.295, 0.460], [0.468, 0.630]],
   },
   {
-    label: "R1-PLAIN",
+    label: "R1",
     y: [0.676, 0.742],
     x: [[0.122, 0.287], [0.295, 0.460], [0.468, 0.630]],
   },
   {
-    label: "R2-PLAIN",
+    label: "R2",
     y: [0.593, 0.659],
     x: [[0.122, 0.287], [0.295, 0.460], [0.468, 0.630]],
   },
@@ -79,11 +78,25 @@ const ROWS: RowDef[] = [
   },
 ];
 
+// How many WRONG balls each row has:
+// R0, R1, R5 → 1 errada (2 certas)
+// R2, R3, R4 → 2 erradas (1 certa)
+const ROW_WRONG_COUNT = [1, 1, 2, 2, 2, 1];
+
 const ROW_COLORS = ["#ff0", "#0ff", "#0f0", "#f80", "#f0f", "#fff"];
 const TOTAL_ROWS = ROWS.length;
 
-function randomWrongBalls() {
-  return Array.from({ length: TOTAL_ROWS }, () => Math.floor(Math.random() * 3));
+// Returns for each row an array of WRONG ball indices
+function randomWrongBalls(): number[][] {
+  return ROW_WRONG_COUNT.map(wrongCount => {
+    const pool = [0, 1, 2];
+    const wrong: number[] = [];
+    for (let i = 0; i < wrongCount; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      wrong.push(pool.splice(idx, 1)[0]);
+    }
+    return wrong;
+  });
 }
 
 export default function App() {
@@ -91,7 +104,8 @@ export default function App() {
   const [imgBounds, setImgBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const [gameActive, setGameActive] = useState(false);
   const [currentRow, setCurrentRow] = useState(0);
-  const [wrongBalls, setWrongBalls] = useState<number[]>(randomWrongBalls);
+  // wrongBalls[rowIdx] = array of wrong ball indices for that row
+  const [wrongBalls, setWrongBalls] = useState<number[][]>(randomWrongBalls);
   const [errorBall, setErrorBall] = useState<{ row: number; ball: number } | null>(null);
   const [successBall, setSuccessBall] = useState<{ row: number; ball: number } | null>(null);
   const [jogarLit, setJogarLit] = useState(false);
@@ -149,13 +163,14 @@ export default function App() {
   const handleBallClick = (rowIdx: number, ballIdx: number) => {
     if (!gameActive || rowIdx !== currentRow || locked) return;
     setLocked(true);
-    if (ballIdx === wrongBalls[rowIdx]) {
+    const isWrong = wrongBalls[rowIdx].includes(ballIdx);
+    if (isWrong) {
       playErrorSound();
       setErrorBall({ row: rowIdx, ball: ballIdx });
       setTimeout(() => {
         setErrorBall(null);
         setCurrentRow(0);
-        setWrongBalls(randomWrongBalls());
+        setWrongBalls(randomWrongBalls()); // new random path on restart
         setLocked(false);
       }, 1400);
     } else {
@@ -203,12 +218,14 @@ export default function App() {
         const [yStart, yEnd] = row.y;
         const rowH = yEnd - yStart;
         const color = ROW_COLORS[rowIdx];
+        const wrongCount = ROW_WRONG_COUNT[rowIdx];
 
         return row.x.map(([xStart, xEnd], ballIdx) => {
           const xW = xEnd - xStart;
           const isError = errorBall?.row === rowIdx && errorBall?.ball === ballIdx;
           const isSuccess = successBall?.row === rowIdx && successBall?.ball === ballIdx;
           const isActive = gameActive && rowIdx === currentRow;
+          const isWrong = wrongBalls[rowIdx]?.includes(ballIdx);
 
           return (
             <div
@@ -222,6 +239,7 @@ export default function App() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexDirection: "column",
                 background: DEBUG
                   ? `${color}33`
                   : isSuccess
@@ -235,8 +253,9 @@ export default function App() {
               }}
             >
               {DEBUG && (
-                <span style={{ fontSize: 7, color: "#fff", fontWeight: 900, userSelect: "none", textShadow: "0 0 3px #000" }}>
-                  {row.label}<br />B{ballIdx}
+                <span style={{ fontSize: 7, color: "#fff", fontWeight: 900, userSelect: "none", textShadow: "0 0 3px #000", textAlign: "center", lineHeight: 1.2 }}>
+                  {row.label} B{ballIdx}{"\n"}
+                  {wrongCount === 1 ? (isWrong ? "❌ERRADA" : "✓certa") : (isWrong ? "❌ERRADA" : "✓CERTA")}
                 </span>
               )}
               {!DEBUG && isError && (
