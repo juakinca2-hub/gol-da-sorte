@@ -1,75 +1,37 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import golDaSorteImg from "@assets/IMG_7715_1780523556282.jpeg";
 
-// Image natural dimensions (confirmed: 1125 x 2175)
+// ── Image natural dimensions (confirmed 1125 × 2175) ──
 const NAT_W = 1125;
 const NAT_H = 2175;
-const NAT_RATIO = NAT_W / NAT_H; // 0.5172...
+const NAT_RATIO = NAT_W / NAT_H;
 
+// ── Modes ──
+// Set TOUCH_CALIB = true to enter calibration mode:
+//   Touch the CENTER of each ball → write down the yFrac shown → send to developer
+const TOUCH_CALIB = false;
 const DEBUG = false;
-const CALIBRATE = false;
 
-function getAudioCtx() {
-  return new (window.AudioContext || (window as any).webkitAudioContext)();
-}
-function playClickSound() {
-  const ctx = getAudioCtx();
-  const osc = ctx.createOscillator(); const gain = ctx.createGain();
-  osc.connect(gain); gain.connect(ctx.destination);
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(800, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
-  gain.gain.setValueAtTime(0.4, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-  osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
-}
-function playErrorSound() {
-  const ctx = getAudioCtx();
-  [200, 170, 140].forEach((freq, i) => {
-    const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.11);
-    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.11);
-  });
-}
-function playSuccessSound() {
-  const ctx = getAudioCtx();
-  [600, 800, 1000].forEach((freq, i) => {
-    const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.09);
-    osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.09);
-  });
-}
-
-// ── Row definitions (fractions of the rendered image height/width) ──
-// y: [top, bottom] as fraction of image HEIGHT
-// x: [[left,right], ...] as fraction of image WIDTH — 3 balls per row
-// Index 0 = bottom row (nearest to JOGAR), advances upward
+// ─────────────────────────────────────────────────────────────────
+// ROWS — positions as fractions of rendered image (0 = top, 1 = bottom)
+// y: [top, bottom]   x: [[left,right], [left,right], [left,right]]
+// Row 0 = bottom (nearest JOGAR), Row 5 = top (prize)
+// ─────────────────────────────────────────────────────────────────
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
+// Y positions derived from pixel scan of original image (1125×2175)
+// Ball centers: R0=0.806, R1=0.697, R2=0.587, R3=0.466, R4=0.359, R5=0.255
+// Each row: center ± 0.042 for click area
 const ROWS: RowDef[] = [
-  // R0 — plain bottom row
-  { label: "R0", y: [0.720, 0.800], x: [[0.048, 0.228], [0.238, 0.418], [0.428, 0.608]] },
-  // R1 — plain row
-  { label: "R1", y: [0.635, 0.715], x: [[0.048, 0.228], [0.238, 0.418], [0.428, 0.608]] },
-  // R2 — plain row
-  { label: "R2", y: [0.548, 0.628], x: [[0.048, 0.228], [0.238, 0.418], [0.428, 0.608]] },
-  // R3 — Valendo +1 (label on left, balls shifted right)
-  { label: "R3", y: [0.462, 0.542], x: [[0.175, 0.348], [0.358, 0.530], [0.540, 0.680]] },
-  // R4 — Valendo +5 (label on left, balls shifted right)
-  { label: "R4", y: [0.322, 0.402], x: [[0.175, 0.348], [0.358, 0.530], [0.540, 0.680]] },
-  // R5 — Prize row (top)
-  { label: "R5", y: [0.142, 0.222], x: [[0.048, 0.228], [0.238, 0.418], [0.428, 0.608]] },
+  { label: "R0", y: [0.764, 0.848], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R1", y: [0.655, 0.739], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R2", y: [0.545, 0.629], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R3", y: [0.424, 0.508], x: [[0.198, 0.360], [0.368, 0.530], [0.538, 0.670]] },
+  { label: "R4", y: [0.317, 0.401], x: [[0.198, 0.360], [0.368, 0.530], [0.538, 0.670]] },
+  { label: "R5", y: [0.213, 0.297], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
 ];
 
-// Rows 0,1 = 1 wrong (2 correct); Rows 2,3,4 = 2 wrong (1 correct); Row 5 = 1 wrong (2 correct)
+// Rows 0,1,5 → 1 wrong ball (2 correct); Rows 2,3,4 → 2 wrong (1 correct)
 const ROW_WRONG_COUNT = [1, 1, 2, 2, 2, 1];
 const ROW_COLORS = ["#ff0", "#0ff", "#0f0", "#f80", "#f0f", "#fff"];
 const TOTAL_ROWS = ROWS.length;
@@ -86,27 +48,117 @@ function randomWrongBalls(): number[][] {
   });
 }
 
-type ImgBounds = { x: number; y: number; w: number; h: number };
+type Bounds = { x: number; y: number; w: number; h: number };
 
-function calcBounds(containerW: number, containerH: number): ImgBounds {
-  const conRatio = containerW / containerH;
+function calcBounds(): Bounds {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const conRatio = vw / vh;
   let w: number, h: number, x: number, y: number;
   if (conRatio > NAT_RATIO) {
-    // container is wider → constrained by height
-    h = containerH; w = h * NAT_RATIO;
-    x = (containerW - w) / 2; y = 0;
+    h = vh; w = h * NAT_RATIO; x = (vw - w) / 2; y = 0;
   } else {
-    // container is taller → constrained by width
-    w = containerW; h = w / NAT_RATIO;
-    x = 0; y = (containerH - h) / 2;
+    w = vw; h = w / NAT_RATIO; x = 0; y = (vh - h) / 2;
   }
   return { x, y, w, h };
 }
 
-export default function App() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [bounds, setBounds] = useState<ImgBounds>({ x: 0, y: 0, w: 0, h: 0 });
+// ── Sound helpers ──
+function getAudioCtx() {
+  return new (window.AudioContext || (window as any).webkitAudioContext)();
+}
+function playClickSound() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator(); const g = ctx.createGain();
+  osc.connect(g); g.connect(ctx.destination);
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
+  g.gain.setValueAtTime(0.4, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+  osc.start(); osc.stop(ctx.currentTime + 0.12);
+}
+function playErrorSound() {
+  const ctx = getAudioCtx();
+  [200, 170, 140].forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+    g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.11);
+    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.11);
+  });
+}
+function playSuccessSound() {
+  const ctx = getAudioCtx();
+  [600, 800, 1000].forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+    g.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.09);
+    osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.09);
+  });
+}
 
+// ── Pixel scanner: runs once after image loads, logs ball row positions ──
+function scanImageRows(imgEl: HTMLImageElement) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = imgEl.naturalWidth;
+    canvas.height = imgEl.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(imgEl, 0, 0);
+    const W = imgEl.naturalWidth;
+    const H = imgEl.naturalHeight;
+    const gameW = Math.floor(W * 0.60); // left game panel only
+    
+    // For each row, compute average luminance in game area
+    const lum: number[] = [];
+    for (let y = 0; y < H; y++) {
+      const data = ctx.getImageData(30, y, gameW, 1).data;
+      let total = 0, cnt = 0;
+      for (let i = 0; i < data.length; i += 16) {
+        total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        cnt++;
+      }
+      lum.push(total / cnt);
+    }
+    
+    // Find bright bands (lum > 50) = ball rows; dark = shelves/background
+    const THRESHOLD = 50;
+    let inBand = false, bandStart = 0;
+    const bands: { y1: number; y2: number; yF1: string; yF2: string; yCtr: string }[] = [];
+    for (let y = 0; y < H; y++) {
+      if (lum[y] > THRESHOLD && !inBand) { inBand = true; bandStart = y; }
+      else if (lum[y] <= THRESHOLD && inBand) {
+        inBand = false;
+        const ctr = (bandStart + y) / 2;
+        if (y - bandStart > 20) { // ignore tiny bands
+          bands.push({
+            y1: bandStart, y2: y,
+            yF1: (bandStart / H).toFixed(3),
+            yF2: (y / H).toFixed(3),
+            yCtr: (ctr / H).toFixed(3),
+          });
+        }
+      }
+    }
+    console.log("=== BALL ROW SCAN ===");
+    console.log("Image:", W, "x", H);
+    bands.forEach((b, i) => {
+      console.log(`Band ${i}: y=${b.y1}-${b.y2} → yFrac=[${b.yF1}, ${b.yF2}] center=${b.yCtr}`);
+    });
+    console.log("=== END SCAN ===");
+  } catch (e) {
+    console.log("Scan error:", e);
+  }
+}
+
+export default function App() {
+  const [bounds, setBounds] = useState<Bounds>(calcBounds);
   const [gameActive, setGameActive] = useState(false);
   const [currentRow, setCurrentRow] = useState(0);
   const [wrongBalls, setWrongBalls] = useState<number[][]>(randomWrongBalls);
@@ -114,33 +166,21 @@ export default function App() {
   const [successBall, setSuccessBall] = useState<{ row: number; ball: number } | null>(null);
   const [jogarLit, setJogarLit] = useState(false);
   const [locked, setLocked] = useState(false);
+  // Calibration state
+  const [calibTaps, setCalibTaps] = useState<{ xF: string; yF: string }[]>([]);
 
-  const measure = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    // Use innerWidth/innerHeight for accurate visual viewport (handles mobile URL bar)
-    const cw = window.innerWidth;
-    const ch = window.innerHeight;
-    setBounds(calcBounds(cw, ch));
-  }, []);
+  const reCalc = useCallback(() => setBounds(calcBounds()), []);
 
   useEffect(() => {
-    measure();
-    window.addEventListener("resize", measure);
-    // Also listen to visual viewport changes (mobile URL bar collapse)
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", measure);
-    }
+    window.addEventListener("resize", reCalc);
+    window.visualViewport?.addEventListener("resize", reCalc);
     return () => {
-      window.removeEventListener("resize", measure);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", measure);
-      }
+      window.removeEventListener("resize", reCalc);
+      window.visualViewport?.removeEventListener("resize", reCalc);
     };
-  }, [measure]);
+  }, [reCalc]);
 
-  // Helper: style for an overlay rect, using absolute positioning inside the container
-  // xF, yF = top-left corner as fraction of image; wF, hF = size as fraction of image
+  // Overlay style helper (position: absolute within the fixed container)
   const ov = (xF: number, yF: number, wF: number, hF: number) => ({
     position: "absolute" as const,
     left: bounds.x + bounds.w * xF,
@@ -149,7 +189,23 @@ export default function App() {
     height: bounds.h * hF,
   });
 
+  // ── Calibration tap handler ──
+  const handleCalibTap = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!TOUCH_CALIB) return;
+    const clientX = "touches" in e
+      ? e.touches[0]?.clientX ?? (e as any).clientX
+      : (e as React.MouseEvent).clientX;
+    const clientY = "touches" in e
+      ? e.touches[0]?.clientY ?? (e as any).clientY
+      : (e as React.MouseEvent).clientY;
+    const xF = ((clientX - bounds.x) / bounds.w).toFixed(3);
+    const yF = ((clientY - bounds.y) / bounds.h).toFixed(3);
+    setCalibTaps(prev => [{ xF, yF }, ...prev].slice(0, 8));
+  };
+
+  // ── Game handlers ──
   const handleJogar = () => {
+    if (TOUCH_CALIB) return;
     playClickSound();
     setJogarLit(true);
     setTimeout(() => setJogarLit(false), 400);
@@ -164,8 +220,7 @@ export default function App() {
   const handleBallClick = (rowIdx: number, ballIdx: number) => {
     if (!gameActive || rowIdx !== currentRow || locked) return;
     setLocked(true);
-    const isWrong = wrongBalls[rowIdx].includes(ballIdx);
-    if (isWrong) {
+    if (wrongBalls[rowIdx].includes(ballIdx)) {
       playErrorSound();
       setErrorBall({ row: rowIdx, ball: ballIdx });
       setTimeout(() => {
@@ -192,29 +247,20 @@ export default function App() {
   };
 
   return (
-    // Outer container: fixed to cover exactly the visual viewport
     <div
-      ref={containerRef}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "#000",
-        overflow: "hidden",
-      }}
+      style={{ position: "fixed", inset: 0, background: "#000", overflow: "hidden" }}
+      onClick={TOUCH_CALIB ? handleCalibTap : undefined}
+      onTouchStart={TOUCH_CALIB ? handleCalibTap : undefined}
     >
-      {/* The background image */}
+      {/* Background image */}
       <img
         src={golDaSorteImg}
         alt="Gol da Sorte"
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          display: "block",
-        }}
+        onLoad={(e) => scanImageRows(e.currentTarget)}
+        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
       />
 
-      {/* ── JOGAR button overlay ── */}
+      {/* ── JOGAR ── */}
       <div
         onClick={handleJogar}
         style={{
@@ -234,8 +280,8 @@ export default function App() {
       {ROWS.map((row, rowIdx) => {
         const [yS, yE] = row.y;
         const rowH = yE - yS;
-        const color = ROW_COLORS[rowIdx];
         const isActive = gameActive && rowIdx === currentRow;
+        const col = ROW_COLORS[rowIdx];
 
         return row.x.map(([xS, xE], ballIdx) => {
           const xW = xE - xS;
@@ -255,24 +301,18 @@ export default function App() {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: isActive ? "pointer" : "default",
-                background: DEBUG
-                  ? `${color}44`
+                background: DEBUG ? `${col}44`
                   : isOk ? "rgba(100,255,100,0.28)"
                   : isActive ? "rgba(255,220,50,0.06)"
                   : "transparent",
-                outline: DEBUG
-                  ? `2px solid ${color}`
+                outline: DEBUG ? `2px solid ${col}`
                   : isActive ? "2px solid rgba(255,220,50,0.30)" : "none",
                 boxShadow: !DEBUG && isOk ? "0 0 18px 6px rgba(80,255,80,0.55)" : "none",
-                pointerEvents: (isActive || DEBUG) ? "auto" : "none",
+                pointerEvents: (isActive && !TOUCH_CALIB) ? "auto" : "none",
               }}
             >
               {DEBUG && (
-                <span style={{
-                  fontSize: 8, color: "#fff", fontWeight: 900,
-                  textShadow: "0 0 3px #000", textAlign: "center", lineHeight: 1.3,
-                  pointerEvents: "none",
-                }}>
+                <span style={{ fontSize: 8, color: "#fff", fontWeight: 900, textShadow: "0 0 3px #000" }}>
                   {row.label}B{ballIdx}
                 </span>
               )}
@@ -289,47 +329,51 @@ export default function App() {
         });
       })}
 
-      {/* ── Calibration lines (CALIBRATE mode) ── */}
-      {CALIBRATE && ROWS.map((row, ri) => {
-        const [yS, yE] = row.y;
-        const yC = (yS + yE) / 2;
-        const col = ROW_COLORS[ri];
-        return [
-          { yF: yS, lbl: `${row.label} top ${yS.toFixed(3)}` },
-          { yF: yC, lbl: `${row.label} CTR ${yC.toFixed(3)}` },
-          { yF: yE, lbl: `${row.label} bot ${yE.toFixed(3)}` },
-        ].map(({ yF, lbl }, li) => (
-          <div key={`cl-${ri}-${li}`} style={{
-            position: "absolute",
-            left: bounds.x,
-            top: bounds.y + bounds.h * yF,
-            width: bounds.w * 0.70,
-            height: 1,
-            background: col,
-            zIndex: 50,
-            pointerEvents: "none",
+      {/* ── CALIBRATION OVERLAY ── */}
+      {TOUCH_CALIB && (
+        <>
+          {/* Instruction banner */}
+          <div style={{
+            position: "absolute", top: 8, left: 0, right: 0,
+            textAlign: "center", zIndex: 200, pointerEvents: "none",
           }}>
             <span style={{
-              position: "absolute", left: 2, top: -9,
-              fontSize: 7, color: col, fontWeight: 900,
-              textShadow: "0 0 3px #000", whiteSpace: "nowrap",
-            }}>{lbl}</span>
+              background: "rgba(0,0,0,0.85)", color: "#FFD700",
+              fontSize: 13, fontWeight: 900, padding: "4px 12px",
+              borderRadius: 8, letterSpacing: 0.5,
+            }}>
+              MODO CALIBRAÇÃO — Toque no centro de cada bola
+            </span>
           </div>
-        ));
-      })}
 
-      {/* ── Debug info box ── */}
-      {CALIBRATE && bounds.w > 0 && (
-        <div style={{
-          position: "absolute", bottom: 60, right: 4,
-          background: "rgba(0,0,0,0.85)", color: "#fff",
-          fontSize: 8, padding: "3px 5px", zIndex: 100,
-          borderRadius: 3, pointerEvents: "none", lineHeight: 1.5,
-        }}>
-          img {bounds.w.toFixed(0)}×{bounds.h.toFixed(0)}<br />
-          top:{bounds.y.toFixed(1)} left:{bounds.x.toFixed(1)}<br />
-          vp:{window.innerWidth}×{window.innerHeight}
-        </div>
+          {/* Tap log */}
+          <div style={{
+            position: "absolute", top: 40, left: 8,
+            background: "rgba(0,0,0,0.88)", color: "#fff",
+            fontSize: 11, padding: "6px 10px", borderRadius: 8,
+            zIndex: 200, pointerEvents: "none", lineHeight: 1.8,
+            minWidth: 160,
+          }}>
+            <div style={{ color: "#FFD700", fontWeight: 900, marginBottom: 2 }}>Últimos toques:</div>
+            {calibTaps.length === 0 && <div style={{ color: "#aaa" }}>nenhum ainda</div>}
+            {calibTaps.map((t, i) => (
+              <div key={i} style={{ color: i === 0 ? "#0f0" : "#ccc" }}>
+                x: {t.xF} &nbsp; <strong>y: {t.yF}</strong>
+              </div>
+            ))}
+          </div>
+
+          {/* Current bounds info */}
+          <div style={{
+            position: "absolute", bottom: 70, right: 6,
+            background: "rgba(0,0,0,0.8)", color: "#aaa",
+            fontSize: 9, padding: "3px 6px", borderRadius: 6,
+            zIndex: 200, pointerEvents: "none", lineHeight: 1.5,
+          }}>
+            img {bounds.w.toFixed(0)}×{bounds.h.toFixed(0)}<br />
+            vp {window.innerWidth}×{window.innerHeight}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,0 +1,1 @@
+- [Gol da Sorte ball positions](gol-da-sorte-positions.md) — pixel-scan confirmed ball centers and overlay layout; do NOT change without new scan data
