@@ -192,12 +192,20 @@ export default function App() {
   // ── Calibration tap handler ──
   const handleCalibTap = (e: React.MouseEvent | React.TouchEvent) => {
     if (!TOUCH_CALIB) return;
-    const clientX = "touches" in e
-      ? e.touches[0]?.clientX ?? (e as any).clientX
-      : (e as React.MouseEvent).clientX;
-    const clientY = "touches" in e
-      ? e.touches[0]?.clientY ?? (e as any).clientY
-      : (e as React.MouseEvent).clientY;
+    let clientX: number, clientY: number;
+    if ("changedTouches" in e && e.changedTouches.length > 0) {
+      // touchend — most reliable on iOS
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    } else if ("touches" in e && e.touches.length > 0) {
+      // touchstart fallback
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      // mouse click (desktop)
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
     const xF = ((clientX - bounds.x) / bounds.w).toFixed(3);
     const yF = ((clientY - bounds.y) / bounds.h).toFixed(3);
     setCalibTaps(prev => [{ xF, yF }, ...prev].slice(0, 8));
@@ -250,7 +258,7 @@ export default function App() {
     <div
       style={{ position: "fixed", inset: 0, background: "#000", overflow: "hidden" }}
       onClick={TOUCH_CALIB ? handleCalibTap : undefined}
-      onTouchStart={TOUCH_CALIB ? handleCalibTap : undefined}
+      onTouchEnd={TOUCH_CALIB ? handleCalibTap : undefined}
     >
       {/* Background image */}
       <img
