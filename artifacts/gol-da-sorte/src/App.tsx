@@ -301,13 +301,8 @@ export default function App() {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: isActive ? "pointer" : "default",
-                background: DEBUG ? `${col}44`
-                  : isOk ? "rgba(100,255,100,0.28)"
-                  : isActive ? "rgba(255,220,50,0.06)"
-                  : "transparent",
-                outline: DEBUG ? `2px solid ${col}`
-                  : isActive ? "2px solid rgba(255,220,50,0.30)" : "none",
-                boxShadow: !DEBUG && isOk ? "0 0 18px 6px rgba(80,255,80,0.55)" : "none",
+                background: DEBUG ? `${col}44` : "transparent",
+                outline: DEBUG ? `2px solid ${col}` : "none",
                 pointerEvents: (isActive && !TOUCH_CALIB) ? "auto" : "none",
               }}
             >
@@ -316,13 +311,33 @@ export default function App() {
                   {row.label}B{ballIdx}
                 </span>
               )}
-              {!DEBUG && isErr && (
-                <span style={{
-                  fontSize: Math.max(bounds.w * xW * 0.60, 14),
-                  fontWeight: 900, color: "#ff2222",
-                  textShadow: "0 0 10px #ff0000",
-                  lineHeight: 1, userSelect: "none",
-                }}>✕</span>
+              {/* Visual circle: smaller than click area */}
+              {!DEBUG && (isActive || isOk || isErr) && (
+                <div style={{
+                  width: "62%",
+                  height: "62%",
+                  borderRadius: "50%",
+                  background: isOk ? "rgba(100,255,100,0.30)"
+                    : isErr ? "rgba(255,40,40,0.15)"
+                    : "rgba(255,220,50,0.08)",
+                  outline: isOk ? "2px solid rgba(80,255,80,0.55)"
+                    : isErr ? "none"
+                    : "2px solid rgba(255,220,50,0.50)",
+                  boxShadow: isOk ? "0 0 14px 5px rgba(80,255,80,0.45)" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                }}>
+                  {isErr && (
+                    <span style={{
+                      fontSize: Math.max(bounds.w * xW * 0.45, 12),
+                      fontWeight: 900, color: "#ff2222",
+                      textShadow: "0 0 10px #ff0000",
+                      lineHeight: 1, userSelect: "none",
+                    }}>✕</span>
+                  )}
+                </div>
               )}
             </div>
           );
