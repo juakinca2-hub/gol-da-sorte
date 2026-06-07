@@ -68,40 +68,86 @@ function calcBounds(): Bounds {
 function getAudioCtx() {
   return new (window.AudioContext || (window as any).webkitAudioContext)();
 }
+
 function playClickSound() {
   const ctx = getAudioCtx();
   const osc = ctx.createOscillator(); const g = ctx.createGain();
   osc.connect(g); g.connect(ctx.destination);
   osc.type = "sine";
-  osc.frequency.setValueAtTime(800, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
-  g.gain.setValueAtTime(0.4, ctx.currentTime);
+  osc.frequency.setValueAtTime(600, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.08);
+  g.gain.setValueAtTime(0.5, ctx.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
   osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
-function playErrorSound() {
+
+// 5 notas crescentes bem altas — toque correto
+function playCorrectSound() {
   const ctx = getAudioCtx();
-  [200, 170, 140].forEach((freq, i) => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination);
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
-    g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.11);
-    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.11);
-  });
-}
-function playSuccessSound() {
-  const ctx = getAudioCtx();
-  [600, 800, 1000].forEach((freq, i) => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
+  // Dó-Mi-Sol-Dó-Mi uma oitava acima (acorde de vitória)
+  const notes = [523, 659, 784, 1047, 1319];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
     osc.connect(g); g.connect(ctx.destination);
     osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
-    g.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.09);
-    osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.09);
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
+    g.gain.setValueAtTime(1.0, ctx.currentTime + i * 0.09);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.15);
+    osc.start(ctx.currentTime + i * 0.09);
+    osc.stop(ctx.currentTime + i * 0.09 + 0.15);
   });
+}
+
+// Explosão de bomba bem alta — toque errado
+function playBombSound() {
+  const ctx = getAudioCtx();
+
+  // 1) Ruído branco (estalo da explosão)
+  const sr = ctx.sampleRate;
+  const dur = 0.7;
+  const buf = ctx.createBuffer(1, sr * dur, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const t = i / data.length;
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.5);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = "lowpass";
+  lpf.frequency.setValueAtTime(600, ctx.currentTime);
+  lpf.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + dur);
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(3.5, ctx.currentTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+
+  noise.connect(lpf); lpf.connect(noiseGain); noiseGain.connect(ctx.destination);
+  noise.start(); noise.stop(ctx.currentTime + dur);
+
+  // 2) Sub-grave (thump da explosão)
+  const sub = ctx.createOscillator();
+  const subGain = ctx.createGain();
+  sub.connect(subGain); subGain.connect(ctx.destination);
+  sub.type = "sine";
+  sub.frequency.setValueAtTime(120, ctx.currentTime);
+  sub.frequency.exponentialRampToValueAtTime(25, ctx.currentTime + 0.5);
+  subGain.gain.setValueAtTime(3.0, ctx.currentTime);
+  subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+  sub.start(); sub.stop(ctx.currentTime + 0.55);
+
+  // 3) Crack inicial (clique seco)
+  const crack = ctx.createOscillator();
+  const crackGain = ctx.createGain();
+  crack.connect(crackGain); crackGain.connect(ctx.destination);
+  crack.type = "sawtooth";
+  crack.frequency.setValueAtTime(300, ctx.currentTime);
+  crack.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.06);
+  crackGain.gain.setValueAtTime(2.5, ctx.currentTime);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+  crack.start(); crack.stop(ctx.currentTime + 0.06);
 }
 
 // ── Pixel scanner: runs once after image loads, logs ball row positions ──
@@ -160,7 +206,9 @@ export default function App() {
   const [currentRow, setCurrentRow] = useState(0);
   const [wrongBalls, setWrongBalls] = useState<number[][]>(randomWrongBalls);
   const [errorBall, setErrorBall] = useState<{ row: number; ball: number } | null>(null);
-  const [successBall, setSuccessBall] = useState<{ row: number; ball: number } | null>(null);
+  const [justOkBall, setJustOkBall] = useState<{ row: number; ball: number } | null>(null);
+  // All correct picks in this run — persists green trail until game over / reset
+  const [correctPicks, setCorrectPicks] = useState<{ row: number; ball: number }[]>([]);
   const [jogarLit, setJogarLit] = useState(false);
   const [locked, setLocked] = useState(false);
   // Calibration state
@@ -217,7 +265,8 @@ export default function App() {
     setWrongBalls(randomWrongBalls());
     setCurrentRow(0);
     setErrorBall(null);
-    setSuccessBall(null);
+    setJustOkBall(null);
+    setCorrectPicks([]);
     setLocked(false);
     setGameActive(true);
   };
@@ -226,19 +275,25 @@ export default function App() {
     if (!gameActive || rowIdx !== currentRow || locked) return;
     setLocked(true);
     if (wrongBalls[rowIdx].includes(ballIdx)) {
-      playErrorSound();
+      // ── ERRO: bomba ──
+      playBombSound();
       setErrorBall({ row: rowIdx, ball: ballIdx });
       setTimeout(() => {
         setErrorBall(null);
+        setJustOkBall(null);
+        setCorrectPicks([]);          // limpa trilha de acertos
         setCurrentRow(0);
         setWrongBalls(randomWrongBalls());
         setLocked(false);
-      }, 1400);
+      }, 1600);
     } else {
-      playSuccessSound();
-      setSuccessBall({ row: rowIdx, ball: ballIdx });
+      // ── ACERTO: 5 notas crescentes ──
+      playCorrectSound();
+      const pick = { row: rowIdx, ball: ballIdx };
+      setCorrectPicks(prev => [...prev, pick]); // mantém verde permanente
+      setJustOkBall(pick);                       // flash de destaque
       setTimeout(() => {
-        setSuccessBall(null);
+        setJustOkBall(null);
         const next = rowIdx + 1;
         if (next >= TOTAL_ROWS) {
           setGameActive(false);
@@ -247,7 +302,7 @@ export default function App() {
           setCurrentRow(next);
           setLocked(false);
         }
-      }, 600);
+      }, 700);
     }
   };
 
@@ -290,13 +345,16 @@ export default function App() {
 
         return row.x.map(([xS, xE], ballIdx) => {
           const xW = xE - xS;
-          const isErr = errorBall?.row === rowIdx && errorBall?.ball === ballIdx;
-          const isOk = successBall?.row === rowIdx && successBall?.ball === ballIdx;
+          const isErr  = errorBall?.row === rowIdx && errorBall?.ball === ballIdx;
+          const isJustOk = justOkBall?.row === rowIdx && justOkBall?.ball === ballIdx;
+          const isCorrect = correctPicks.some(p => p.row === rowIdx && p.ball === ballIdx);
+          const showCircle = isActive || isCorrect || isErr;
 
           return (
             <div
               key={`${rowIdx}-${ballIdx}`}
               onClick={() => handleBallClick(rowIdx, ballIdx)}
+              onTouchEnd={(e) => { e.preventDefault(); handleBallClick(rowIdx, ballIdx); }}
               style={{
                 ...ov(xS, yS, xW, rowH),
                 position: "absolute",
@@ -316,31 +374,53 @@ export default function App() {
                   {row.label}B{ballIdx}
                 </span>
               )}
-              {/* Visual circle: smaller than click area */}
-              {!DEBUG && (isActive || isOk || isErr) && (
+              {/* Visual circle */}
+              {!DEBUG && showCircle && (
                 <div style={{
                   width: "62%",
                   height: "62%",
                   borderRadius: "50%",
-                  background: isOk ? "rgba(100,255,100,0.30)"
-                    : isErr ? "rgba(255,40,40,0.15)"
+                  // Erro = vermelho escuro; acerto trail = verde; acerto flash = verde brilhante; ativo = amarelo sutil
+                  background: isErr
+                    ? "rgba(180,20,20,0.25)"
+                    : isCorrect
+                    ? (isJustOk ? "rgba(60,255,80,0.45)" : "rgba(60,220,80,0.28)")
                     : "rgba(255,220,50,0.08)",
-                  outline: isOk ? "2px solid rgba(80,255,80,0.55)"
-                    : isErr ? "none"
+                  outline: isErr
+                    ? "2px solid rgba(255,60,60,0.60)"
+                    : isCorrect
+                    ? "2.5px solid rgba(60,255,100,0.80)"
                     : "2px solid rgba(255,220,50,0.50)",
-                  boxShadow: isOk ? "0 0 14px 5px rgba(80,255,80,0.45)" : "none",
+                  boxShadow: isErr
+                    ? "0 0 18px 6px rgba(255,30,0,0.55)"
+                    : isCorrect
+                    ? (isJustOk
+                        ? "0 0 22px 8px rgba(50,255,80,0.75)"
+                        : "0 0 12px 4px rgba(50,220,80,0.50)")
+                    : "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   pointerEvents: "none",
+                  transition: "box-shadow 0.3s ease",
                 }}>
+                  {/* Erro: 💣 bomba */}
                   {isErr && (
                     <span style={{
-                      fontSize: Math.max(bounds.w * xW * 0.45, 12),
-                      fontWeight: 900, color: "#ff2222",
-                      textShadow: "0 0 10px #ff0000",
+                      fontSize: Math.max(bounds.w * xW * 0.50, 14),
                       lineHeight: 1, userSelect: "none",
-                    }}>✕</span>
+                      filter: "drop-shadow(0 0 8px rgba(255,80,0,0.9))",
+                    }}>💣</span>
+                  )}
+                  {/* Acerto trail: ✓ discreto */}
+                  {isCorrect && !isErr && (
+                    <span style={{
+                      fontSize: Math.max(bounds.w * xW * 0.38, 10),
+                      color: isJustOk ? "#afffb0" : "#70ff90",
+                      fontWeight: 900,
+                      lineHeight: 1, userSelect: "none",
+                      textShadow: "0 0 6px rgba(80,255,100,0.7)",
+                    }}>✓</span>
                   )}
                 </div>
               )}
