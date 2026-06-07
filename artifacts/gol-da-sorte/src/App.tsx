@@ -19,16 +19,17 @@ const DEBUG = false;
 // ─────────────────────────────────────────────────────────────────
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
-// Y positions: pixel scan + confirmed by device tap calibration (375×619 viewport)
-// Ball centers: R0=0.806, R1=0.696, R2=0.586, R3=0.451, R4=0.359, R5=0.255
-// Each row: center ± 0.042 for click area
+// Positions confirmed by Canvas pixel scan of original image (1125×2175)
+// Plain ball X centers: 0.138 / 0.251 / 0.364  (ball width ≈ 0.095, gap ≈ 0.018)
+// VALENDO ball X centers: 0.257 / 0.381 / 0.490
+// Y centers (device calibration + pixel scan): R0=0.806 R1=0.696 R2=0.586 R3=0.451 R4=0.359 R5=0.255
 const ROWS: RowDef[] = [
-  { label: "R0", y: [0.764, 0.848], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R1", y: [0.654, 0.738], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R2", y: [0.544, 0.628], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R3", y: [0.409, 0.493], x: [[0.190, 0.370], [0.375, 0.530], [0.535, 0.670]] },
-  { label: "R4", y: [0.317, 0.401], x: [[0.190, 0.370], [0.375, 0.530], [0.535, 0.670]] },
-  { label: "R5", y: [0.213, 0.297], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R0", y: [0.764, 0.848], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
+  { label: "R1", y: [0.654, 0.738], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
+  { label: "R2", y: [0.544, 0.628], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
+  { label: "R3", y: [0.409, 0.493], x: [[0.183, 0.330], [0.327, 0.434], [0.435, 0.544]] },
+  { label: "R4", y: [0.317, 0.401], x: [[0.183, 0.330], [0.327, 0.434], [0.435, 0.544]] },
+  { label: "R5", y: [0.213, 0.297], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
 ];
 
 // Rows 0,1,5 → 1 wrong ball (2 correct); Rows 2,3,4 → 2 wrong (1 correct)
@@ -109,49 +110,45 @@ function scanImageRows(imgEl: HTMLImageElement) {
     const canvas = document.createElement("canvas");
     canvas.width = imgEl.naturalWidth;
     canvas.height = imgEl.naturalHeight;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.drawImage(imgEl, 0, 0);
     const W = imgEl.naturalWidth;
     const H = imgEl.naturalHeight;
-    const gameW = Math.floor(W * 0.60); // left game panel only
-    
-    // For each row, compute average luminance in game area
-    const lum: number[] = [];
-    for (let y = 0; y < H; y++) {
-      const data = ctx.getImageData(30, y, gameW, 1).data;
-      let total = 0, cnt = 0;
-      for (let i = 0; i < data.length; i += 16) {
-        total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        cnt++;
-      }
-      lum.push(total / cnt);
-    }
-    
-    // Find bright bands (lum > 50) = ball rows; dark = shelves/background
-    const THRESHOLD = 50;
-    let inBand = false, bandStart = 0;
-    const bands: { y1: number; y2: number; yF1: string; yF2: string; yCtr: string }[] = [];
-    for (let y = 0; y < H; y++) {
-      if (lum[y] > THRESHOLD && !inBand) { inBand = true; bandStart = y; }
-      else if (lum[y] <= THRESHOLD && inBand) {
-        inBand = false;
-        const ctr = (bandStart + y) / 2;
-        if (y - bandStart > 20) { // ignore tiny bands
-          bands.push({
-            y1: bandStart, y2: y,
-            yF1: (bandStart / H).toFixed(3),
-            yF2: (y / H).toFixed(3),
-            yCtr: (ctr / H).toFixed(3),
-          });
+
+    // ── Scan X positions at each ball row center ──
+    // Known y-centers from previous scan
+    const yCenters: Record<string, number> = {
+      R5: Math.round(0.255 * H),
+      R4: Math.round(0.359 * H),
+      R3: Math.round(0.451 * H),
+      R2: Math.round(0.587 * H),
+      R1: Math.round(0.697 * H),
+      R0: Math.round(0.806 * H),
+    };
+
+    console.log("=== X POSITION SCAN ===");
+    console.log("Image:", W, "x", H);
+
+    for (const [name, yPx] of Object.entries(yCenters)) {
+      const rowData = ctx.getImageData(0, yPx, W, 1).data;
+      const THRESH = 40;
+      let inSeg = false, segStart = 0;
+      const segs: { x1: number; x2: number; xF1: string; xF2: string; ctr: string }[] = [];
+      for (let x = 0; x < W; x++) {
+        const i = x * 4;
+        const lum = 0.299 * rowData[i] + 0.587 * rowData[i + 1] + 0.114 * rowData[i + 2];
+        if (lum > THRESH && !inSeg) { inSeg = true; segStart = x; }
+        else if (lum <= THRESH && inSeg) {
+          inSeg = false;
+          if (x - segStart > 10) { // ignore tiny segments
+            const ctr = (segStart + x) / 2;
+            segs.push({ x1: segStart, x2: x, xF1: (segStart/W).toFixed(3), xF2: (x/W).toFixed(3), ctr: (ctr/W).toFixed(3) });
+          }
         }
       }
+      console.log(`${name} (y=${yPx}): ${segs.map(s => `[${s.xF1}-${s.xF2}]ctr=${s.ctr}`).join("  ")}`);
     }
-    console.log("=== BALL ROW SCAN ===");
-    console.log("Image:", W, "x", H);
-    bands.forEach((b, i) => {
-      console.log(`Band ${i}: y=${b.y1}-${b.y2} → yFrac=[${b.yF1}, ${b.yF2}] center=${b.yCtr}`);
-    });
-    console.log("=== END SCAN ===");
+    console.log("=== END X SCAN ===");
   } catch (e) {
     console.log("Scan error:", e);
   }
