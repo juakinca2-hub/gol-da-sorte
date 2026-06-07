@@ -9,7 +9,7 @@ const NAT_RATIO = NAT_W / NAT_H;
 // ── Modes ──
 // Set TOUCH_CALIB = true to enter calibration mode:
 //   Touch the CENTER of each ball → write down the yFrac shown → send to developer
-const TOUCH_CALIB = true;
+const TOUCH_CALIB = false;
 const DEBUG = false;
 
 // ─────────────────────────────────────────────────────────────────
@@ -19,15 +19,15 @@ const DEBUG = false;
 // ─────────────────────────────────────────────────────────────────
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
-// Y positions derived from pixel scan of original image (1125×2175)
-// Ball centers: R0=0.806, R1=0.697, R2=0.587, R3=0.466, R4=0.359, R5=0.255
+// Y positions: pixel scan + confirmed by device tap calibration (375×619 viewport)
+// Ball centers: R0=0.806, R1=0.696, R2=0.586, R3=0.451, R4=0.359, R5=0.255
 // Each row: center ± 0.042 for click area
 const ROWS: RowDef[] = [
   { label: "R0", y: [0.764, 0.848], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R1", y: [0.655, 0.739], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R2", y: [0.545, 0.629], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
-  { label: "R3", y: [0.424, 0.508], x: [[0.198, 0.360], [0.368, 0.530], [0.538, 0.670]] },
-  { label: "R4", y: [0.317, 0.401], x: [[0.198, 0.360], [0.368, 0.530], [0.538, 0.670]] },
+  { label: "R1", y: [0.654, 0.738], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R2", y: [0.544, 0.628], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
+  { label: "R3", y: [0.409, 0.493], x: [[0.190, 0.370], [0.375, 0.530], [0.535, 0.670]] },
+  { label: "R4", y: [0.317, 0.401], x: [[0.190, 0.370], [0.375, 0.530], [0.535, 0.670]] },
   { label: "R5", y: [0.213, 0.297], x: [[0.048, 0.210], [0.218, 0.382], [0.390, 0.553]] },
 ];
 
