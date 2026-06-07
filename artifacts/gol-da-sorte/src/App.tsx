@@ -9,7 +9,7 @@ const NAT_RATIO = NAT_W / NAT_H;
 // ── Modes ──
 // Set TOUCH_CALIB = true to enter calibration mode:
 //   Touch the CENTER of each ball → write down the yFrac shown → send to developer
-const TOUCH_CALIB = false;
+const TOUCH_CALIB = true;
 const DEBUG = false;
 
 // ─────────────────────────────────────────────────────────────────
