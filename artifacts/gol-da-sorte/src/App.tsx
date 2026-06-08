@@ -16,8 +16,8 @@ const TOUCH_CALIB = false;
 // JOGADAS number "12":   x=786-881 (xF=0.699-0.783), y=240-274 (yF=0.110-0.126)
 // CONVIDAR AGORA button: x=764-1000 (xF=0.679-0.889), y=1286-1310 (yF=0.591-0.602)
 const UI = {
-  jogadasNum:  { x: 0.675, y: 0.098, w: 0.130, h: 0.048 },   // covers the "12" + some padding
-  jogadasPlus: { x: 0.795, y: 0.098, w: 0.080, h: 0.048 },   // "+" button to the right
+  jogadasNum:  { x: 0.675, y: 0.188, w: 0.130, h: 0.048 },   // covers the "12" + some padding
+  jogadasPlus: { x: 0.795, y: 0.188, w: 0.080, h: 0.048 },   // "+" button to the right
   convidar:    { x: 0.608, y: 0.569, w: 0.272, h: 0.052 },   // CONVIDAR AGORA button
 };
 
