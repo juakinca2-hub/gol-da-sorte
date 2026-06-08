@@ -12,6 +12,15 @@ const NAT_RATIO = NAT_W / NAT_H;
 const DEBUG = false;
 const TOUCH_CALIB = false;
 
+// ── Calibrated UI positions (pixel scan confirmed) ──
+// JOGADAS number "12":   x=786-881 (xF=0.699-0.783), y=240-274 (yF=0.110-0.126)
+// CONVIDAR AGORA button: x=764-1000 (xF=0.679-0.889), y=1286-1310 (yF=0.591-0.602)
+const UI = {
+  jogadasNum:  { x: 0.675, y: 0.098, w: 0.130, h: 0.048 },   // covers the "12" + some padding
+  jogadasPlus: { x: 0.795, y: 0.098, w: 0.080, h: 0.048 },   // "+" button to the right
+  convidar:    { x: 0.608, y: 0.569, w: 0.272, h: 0.052 },   // CONVIDAR AGORA button
+};
+
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
 const ROWS: RowDef[] = [
@@ -74,8 +83,7 @@ function playCorrectSound() {
   const ctx = getAudioCtx();
   const notes = [523, 659, 784, 1047, 1319];
   notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
     osc.connect(g); g.connect(ctx.destination);
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
@@ -88,18 +96,15 @@ function playCorrectSound() {
 
 function playBombSound() {
   const ctx = getAudioCtx();
-  const sr = ctx.sampleRate;
-  const dur = 0.7;
+  const sr = ctx.sampleRate; const dur = 0.7;
   const buf = ctx.createBuffer(1, sr * dur, sr);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) {
     const t = i / data.length;
     data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.5);
   }
-  const noise = ctx.createBufferSource();
-  noise.buffer = buf;
-  const lpf = ctx.createBiquadFilter();
-  lpf.type = "lowpass";
+  const noise = ctx.createBufferSource(); noise.buffer = buf;
+  const lpf = ctx.createBiquadFilter(); lpf.type = "lowpass";
   lpf.frequency.setValueAtTime(600, ctx.currentTime);
   lpf.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + dur);
   const noiseGain = ctx.createGain();
@@ -107,19 +112,15 @@ function playBombSound() {
   noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
   noise.connect(lpf); lpf.connect(noiseGain); noiseGain.connect(ctx.destination);
   noise.start(); noise.stop(ctx.currentTime + dur);
-  const sub = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  sub.connect(subGain); subGain.connect(ctx.destination);
-  sub.type = "sine";
+  const sub = ctx.createOscillator(); const subGain = ctx.createGain();
+  sub.connect(subGain); subGain.connect(ctx.destination); sub.type = "sine";
   sub.frequency.setValueAtTime(120, ctx.currentTime);
   sub.frequency.exponentialRampToValueAtTime(25, ctx.currentTime + 0.5);
   subGain.gain.setValueAtTime(3.0, ctx.currentTime);
   subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
   sub.start(); sub.stop(ctx.currentTime + 0.55);
-  const crack = ctx.createOscillator();
-  const crackGain = ctx.createGain();
-  crack.connect(crackGain); crackGain.connect(ctx.destination);
-  crack.type = "sawtooth";
+  const crack = ctx.createOscillator(); const crackGain = ctx.createGain();
+  crack.connect(crackGain); crackGain.connect(ctx.destination); crack.type = "sawtooth";
   crack.frequency.setValueAtTime(300, ctx.currentTime);
   crack.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.06);
   crackGain.gain.setValueAtTime(2.5, ctx.currentTime);
@@ -138,8 +139,7 @@ async function apiCall(path: string, opts?: RequestInit) {
 }
 
 function getReferralCodeFromUrl(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("ref");
+  return new URLSearchParams(window.location.search).get("ref");
 }
 
 export default function App() {
@@ -154,7 +154,6 @@ export default function App() {
   const [locked, setLocked] = useState(false);
   const [calibTaps, setCalibTaps] = useState<{ xF: string; yF: string }[]>([]);
 
-  // ── User state ──
   const [userId, setUserId] = useState<number | null>(() => {
     const stored = localStorage.getItem("golUserId");
     return stored ? parseInt(stored) : null;
@@ -197,11 +196,12 @@ export default function App() {
     });
   }, [userId]);
 
-  const ov = (xF: number, yF: number, wF: number, hF: number) => ({
-    position: "absolute" as const,
+  // ── Overlay helper: positions an element over a fraction of the rendered image ──
+  const ov = (xF: number, yF: number, wF: number, hF: number): React.CSSProperties => ({
+    position: "absolute",
     left: bounds.x + bounds.w * xF,
-    top: bounds.y + bounds.h * yF,
-    width: bounds.w * wF,
+    top:  bounds.y + bounds.h * yF,
+    width:  bounds.w * wF,
     height: bounds.h * hF,
   });
 
@@ -222,11 +222,7 @@ export default function App() {
 
   const handleJogar = async () => {
     if (TOUCH_CALIB || !userId) return;
-
-    if (playsRemaining <= 0) {
-      setShowPurchaseModal(true);
-      return;
-    }
+    if (playsRemaining <= 0) { setShowPurchaseModal(true); return; }
 
     playClickSound();
     setJogarLit(true);
@@ -242,12 +238,8 @@ export default function App() {
     }
 
     setWrongBalls(randomWrongBalls());
-    setCurrentRow(0);
-    setErrorBall(null);
-    setJustOkBall(null);
-    setCorrectPicks([]);
-    setLocked(false);
-    setGameActive(true);
+    setCurrentRow(0); setErrorBall(null); setJustOkBall(null);
+    setCorrectPicks([]); setLocked(false); setGameActive(true);
   };
 
   const handleBallClick = (rowIdx: number, ballIdx: number) => {
@@ -302,6 +294,10 @@ export default function App() {
     return <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />;
   }
 
+  // Derived font size based on image render width
+  const numFontSize = Math.max(bounds.w * 0.040, 13);
+  const smallFontSize = Math.max(bounds.w * 0.022, 9);
+
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "#000", overflow: "hidden" }}
@@ -315,87 +311,105 @@ export default function App() {
         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
       />
 
-      {/* ── FLOATING HUD ── fixed, always visible, não depende de coordenadas da imagem ── */}
-      <div style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0,
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 14px",
-        background: "linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%)",
-        pointerEvents: "none",
-      }}>
-        {/* Plays counter badge */}
-        <div style={{
-          background: "rgba(0,0,0,0.70)",
-          border: "1.5px solid rgba(255,200,0,0.6)",
-          borderRadius: 20,
-          padding: "5px 14px",
+      {/* ══════════════════════════════════════════════
+          JOGADAS counter — covers the static "12" in image
+          Pixel scan: x=786-881 (xF≈0.699-0.783), y=240-274 (yF≈0.110-0.126)
+          ══════════════════════════════════════════════ */}
+      <div
+        style={{
+          ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w, UI.jogadasNum.h),
+          zIndex: 30,
+          background: DEBUG ? "rgba(0,255,0,0.3)" : "rgba(10,8,4,0.82)",
+          borderRadius: 4,
           display: "flex",
           alignItems: "center",
-          gap: 6,
+          justifyContent: "center",
+          border: DEBUG ? "2px solid lime" : "none",
           pointerEvents: "none",
+        }}
+      >
+        <span style={{
+          color: "#FFD700",
+          fontWeight: 900,
+          fontSize: numFontSize,
+          lineHeight: 1,
+          textShadow: "0 0 8px rgba(255,200,0,0.6)",
+          letterSpacing: 1,
         }}>
-          <span style={{ fontSize: 16 }}>⚽</span>
-          <span style={{ color: "#FFD700", fontWeight: 900, fontSize: 15, letterSpacing: 0.5 }}>
-            {playsRemaining}
-          </span>
-          <span style={{ color: "#aaa", fontSize: 11 }}>JOGADAS</span>
-        </div>
-
-        {/* Invite button (right side) */}
-        <div
-          onClick={(e) => { e.stopPropagation(); setShowInviteScreen(true); }}
-          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setShowInviteScreen(true); }}
-          style={{
-            background: referralUnlocked
-              ? "linear-gradient(135deg, #7B2FBE, #5B21B6)"
-              : "rgba(60,60,60,0.80)",
-            border: referralUnlocked
-              ? "1.5px solid rgba(167,139,250,0.7)"
-              : "1.5px solid rgba(100,100,100,0.5)",
-            borderRadius: 20,
-            padding: "5px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            cursor: "pointer",
-            pointerEvents: "auto",
-            opacity: referralUnlocked ? 1 : 0.6,
-          }}
-        >
-          {referralUnlocked ? (
-            <>
-              <span style={{ fontSize: 14 }}>👥</span>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 12, letterSpacing: 0.5 }}>
-                INDICAR
-              </span>
-            </>
-          ) : (
-            <>
-              <span style={{ fontSize: 12 }}>🔒</span>
-              <span style={{ color: "#888", fontWeight: 700, fontSize: 11 }}>
-                INDICAR
-              </span>
-            </>
-          )}
-        </div>
+          {playsRemaining}
+        </span>
       </div>
 
-      {/* ── JOGAR button overlay ── */}
+      {/* ══════════════════════════════════════════════
+          "+" button area — buy more plays
+          Positioned right of JOGADAS number
+          ══════════════════════════════════════════════ */}
+      <div
+        onClick={() => setShowPurchaseModal(true)}
+        onTouchEnd={(e) => { e.preventDefault(); setShowPurchaseModal(true); }}
+        style={{
+          ...ov(UI.jogadasPlus.x, UI.jogadasPlus.y, UI.jogadasPlus.w, UI.jogadasPlus.h),
+          zIndex: 30,
+          cursor: "pointer",
+          background: DEBUG ? "rgba(255,165,0,0.4)" : "transparent",
+          border: DEBUG ? "2px solid orange" : "none",
+          borderRadius: 4,
+        }}
+      />
+
+      {/* ══════════════════════════════════════════════
+          CONVIDAR AGORA button overlay
+          Pixel scan: x=764-1000 (xF≈0.679-0.889), y=1286-1310 (yF≈0.591-0.602)
+          Expanded slightly for easier tapping
+          ══════════════════════════════════════════════ */}
+      <div
+        onClick={() => setShowInviteScreen(true)}
+        onTouchEnd={(e) => { e.preventDefault(); setShowInviteScreen(true); }}
+        style={{
+          ...ov(UI.convidar.x, UI.convidar.y, UI.convidar.w, UI.convidar.h),
+          zIndex: 30,
+          cursor: "pointer",
+          background: DEBUG ? "rgba(128,0,255,0.4)" : "transparent",
+          border: DEBUG ? "2px solid violet" : "none",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Show lock badge when not yet unlocked */}
+        {!referralUnlocked && !DEBUG && (
+          <div style={{
+            background: "rgba(0,0,0,0.65)",
+            borderRadius: 6,
+            padding: "2px 8px",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            pointerEvents: "none",
+          }}>
+            <span style={{ fontSize: smallFontSize * 1.1 }}>🔒</span>
+            <span style={{ color: "#aaa", fontSize: smallFontSize, fontWeight: 700, lineHeight: 1 }}>
+              Bloqueado
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          JOGAR button overlay
+          ══════════════════════════════════════════════ */}
       <div
         onClick={handleJogar}
         style={{
           ...ov(0.030, 0.860, 0.560, 0.052),
-          borderRadius: 8,
+          zIndex: 10,
           cursor: "pointer",
+          borderRadius: 8,
           background: DEBUG ? "rgba(255,0,0,0.4)"
-            : playsRemaining <= 0 ? "rgba(255,40,0,0.20)"
+            : playsRemaining <= 0 ? "rgba(255,40,0,0.18)"
             : jogarLit ? "rgba(255,200,50,0.45)" : "transparent",
           boxShadow: !DEBUG && jogarLit ? "0 0 24px 8px rgba(255,180,0,0.7)" : "none",
-          zIndex: 10,
           border: DEBUG ? "2px solid red" : "none",
           display: "flex",
           alignItems: "center",
@@ -404,19 +418,19 @@ export default function App() {
       >
         {playsRemaining <= 0 && !DEBUG && (
           <span style={{
-            color: "#FF6B35",
-            fontWeight: 900,
+            color: "#FF6B35", fontWeight: 900,
             fontSize: Math.max(bounds.w * 0.025, 9),
             textShadow: "0 0 4px rgba(0,0,0,0.9)",
-            letterSpacing: 0.3,
             pointerEvents: "none",
           }}>
-            SEM JOGADAS
+            SEM JOGADAS — TOQUE PARA COMPRAR
           </span>
         )}
       </div>
 
-      {/* ── Ball overlays ── */}
+      {/* ══════════════════════════════════════════════
+          Ball overlays
+          ══════════════════════════════════════════════ */}
       {ROWS.map((row, rowIdx) => {
         const [yS, yE] = row.y;
         const rowH = yE - yS;
@@ -437,22 +451,15 @@ export default function App() {
               onTouchEnd={(e) => { e.preventDefault(); handleBallClick(rowIdx, ballIdx); }}
               style={{
                 ...ov(xS, yS, xW, rowH),
-                borderRadius: "50%",
-                zIndex: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderRadius: "50%", zIndex: 20,
+                display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: isActive ? "pointer" : "default",
                 background: DEBUG ? `${col}44` : "transparent",
                 outline: DEBUG ? `2px solid ${col}` : "none",
                 pointerEvents: (isActive && !TOUCH_CALIB) ? "auto" : "none",
               }}
             >
-              {DEBUG && (
-                <span style={{ fontSize: 8, color: "#fff", fontWeight: 900, textShadow: "0 0 3px #000" }}>
-                  {row.label}B{ballIdx}
-                </span>
-              )}
+              {DEBUG && <span style={{ fontSize: 8, color: "#fff", fontWeight: 900, textShadow: "0 0 3px #000" }}>{row.label}B{ballIdx}</span>}
               {!DEBUG && showCircle && (
                 <div style={{
                   width: "62%", height: "62%", borderRadius: "50%",
@@ -476,7 +483,7 @@ export default function App() {
         <>
           <div style={{ position: "absolute", top: 8, left: 0, right: 0, textAlign: "center", zIndex: 200, pointerEvents: "none" }}>
             <span style={{ background: "rgba(0,0,0,0.85)", color: "#FFD700", fontSize: 13, fontWeight: 900, padding: "4px 12px", borderRadius: 8 }}>
-              MODO CALIBRAÇÃO — Toque no centro de cada bola
+              MODO CALIBRAÇÃO — Toque em qualquer elemento
             </span>
           </div>
           <div style={{ position: "absolute", top: 40, left: 8, background: "rgba(0,0,0,0.88)", color: "#fff", fontSize: 11, padding: "6px 10px", borderRadius: 8, zIndex: 200, pointerEvents: "none", lineHeight: 1.8, minWidth: 160 }}>
@@ -487,7 +494,7 @@ export default function App() {
         </>
       )}
 
-      {/* ── TOAST NOTIFICATION ── */}
+      {/* ── TOAST ── */}
       {toast && (
         <div style={{
           position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
