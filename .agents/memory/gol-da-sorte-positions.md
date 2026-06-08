@@ -1,47 +1,43 @@
 ---
 name: Gol da Sorte ball overlay positions
-description: Pixel-scan + real device tap calibration confirmed ball centers (yFrac) and clickable overlay layout for the Gol da Sorte PWA
+description: Pixel-scan + real device calibration confirmed overlay positions for Gol da Sorte PWA
 ---
 
 ## Image dimensions
 1125 × 2175 px, aspect ratio 0.5172
 
-## Device calibration data (user's iPhone, viewport 375×619)
-User tapped center of each ball, recorded by TOUCH_CALIB mode:
-- R5: y=0.255, x≈0.261
-- R4: y=0.359, x≈0.355
-- R3: y=0.451, x≈0.353
-- R2: y=0.586, x≈0.245
-- R1: y=0.696, x≈0.245
-- R0: not tapped (extrapolated from pixel scan: 0.806)
+## IMPORTANT: raw image vs real device discrepancy
+Raw pixel scan of image gives different yF than what appears on the user's Android device.
+Always prefer WhatsApp screenshot measurements for RIGHT PANEL y-axis calibration.
+- Raw image scan: "JOGADAS 12" at yF=0.110-0.126
+- Real device (WA screenshot 826×1280): "JOGADAS 12" at yF≈0.289-0.306
+- Discrepancy caused by browser chrome (address bar, nav bar) shrinking effective viewport
 
-## Applied overlay positions (center ± 0.042 in y)
-```
-R0: y=[0.764, 0.848], x=[[0.048,0.210],[0.218,0.382],[0.390,0.553]]
-R1: y=[0.654, 0.738], x=[[0.048,0.210],[0.218,0.382],[0.390,0.553]]
-R2: y=[0.544, 0.628], x=[[0.048,0.210],[0.218,0.382],[0.390,0.553]]
-R3: y=[0.409, 0.493], x=[[0.190,0.370],[0.375,0.530],[0.535,0.670]]
-R4: y=[0.317, 0.401], x=[[0.190,0.370],[0.375,0.530],[0.535,0.670]]
-R5: y=[0.213, 0.297], x=[[0.048,0.210],[0.218,0.382],[0.390,0.553]]
-JOGAR: ov(0.030, 0.860, 0.560, 0.045)
-```
+## RIGHT PANEL calibrated positions (from real device WA screenshot)
 
-## Key findings
-- R3 (VALENDO+1) real center is y=0.451, NOT 0.466 from pixel scan (9px discrepancy)
-- VALENDO rows (R3, R4) balls start further left: Ball 0 covers x=[0.190, 0.370]
-- Plain rows (R0, R1, R2, R5) x positions confirmed accurate via pixel scan
-- R5, R4, R2, R1 y positions matched pixel scan exactly
+| Element | x | y | w | h | Notes |
+|---|---|---|---|---|---|
+| JOGADAS counter (real number) | 0.675 | **0.188** | 0.130 | 0.048 | User confirmed "perfeito" |
+| "+" buy button | 0.795 | 0.188 | 0.080 | 0.048 | Right of counter |
+| "JOGADAS 12 +" black mask | 0.618 | **0.249** | 0.285 | 0.082 | Covers static image text |
+| CONVIDAR AGORA button | 0.608 | 0.569 | 0.272 | 0.052 | Purple button |
+
+## Ball row positions (raw image fractions — still valid for LEFT panel)
+```
+R0: y=[0.764, 0.848], x=[[0.086,0.191],[0.200,0.304],[0.313,0.415]]
+R1: y=[0.654, 0.738], x=[[0.086,0.191],[0.200,0.304],[0.313,0.415]]
+R2: y=[0.544, 0.628], x=[[0.086,0.191],[0.200,0.304],[0.313,0.415]]
+R3: y=[0.409, 0.493], x=[[0.183,0.330],[0.327,0.434],[0.435,0.544]]
+R4: y=[0.317, 0.401], x=[[0.183,0.330],[0.327,0.434],[0.435,0.544]]
+R5: y=[0.213, 0.297], x=[[0.086,0.191],[0.200,0.304],[0.313,0.415]]
+JOGAR: ov(0.030, 0.860, 0.560, 0.052)
+```
 
 ## Row wrong-ball counts
-ROW_WRONG_COUNT = [1, 1, 2, 2, 2, 1]  (R0→R5, 1 wrong = 2 correct, 2 wrong = 1 correct)
-
-## Visual circle
-Inner circle is 62% of overlay area (centered). Outer div is transparent click area.
+ROW_WRONG_COUNT = [1, 1, 2, 2, 2, 1]
 
 ## How to re-calibrate
-Set TOUCH_CALIB=true in App.tsx, use onTouchEnd (NOT onTouchStart — iOS needs changedTouches).
-Ask user to tap center of ONE ball per row and photograph the "Últimos toques" panel.
+Set TOUCH_CALIB=true in App.tsx. User taps element, logs show xF/yF.
+Use onTouchEnd with changedTouches (NOT onTouchStart — iOS needs changedTouches).
 
-**Why:** Manual/visual estimates were inconsistent. R3 pixel scan gave 0.466 but real device tap showed 0.451. Always trust real device tap data over pixel scan when available.
-
-**How to apply:** If alignment complaints return, enable TOUCH_CALIB=true and collect fresh tap data.
+**Why:** Ball positions are purely geometric (left panel, predictable from raw image). Right panel UI elements depend on device viewport+chrome — always use real device screenshot for those.
