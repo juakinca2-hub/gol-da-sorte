@@ -165,6 +165,25 @@ router.post("/:id/purchase", async (req, res) => {
   res.json({ user: updated, wasFirstPurchase });
 });
 
+router.post("/:id/credit-plays", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { amount } = req.body as { amount: number };
+  if (!amount || amount < 1) {
+    res.status(400).json({ error: "Quantidade inválida" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!user) {
+    res.status(404).json({ error: "Usuário não encontrado" });
+    return;
+  }
+  const [updated] = await db.update(usersTable)
+    .set({ playsRemaining: user.playsRemaining + amount })
+    .where(eq(usersTable.id, id))
+    .returning();
+  res.json({ user: updated, bonusGranted: amount });
+});
+
 router.get("/:id/referral-info", async (req, res) => {
   const id = parseInt(req.params.id);
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));

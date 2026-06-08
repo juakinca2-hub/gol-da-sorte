@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import golDaSorteImg from "@assets/IMG_7715_1780523556282.jpeg";
 import RegisterScreen from "./components/RegisterScreen";
 import PurchaseModal from "./components/PurchaseModal";
@@ -128,6 +128,110 @@ function playBombSound() {
   crack.start(); crack.stop(ctx.currentTime + 0.06);
 }
 
+function playFanfareSound(big: boolean) {
+  const ctx = getAudioCtx();
+  // Fanfare melody: G4-C5-E5-G5 (big adds a high final note + drums)
+  const notes = big
+    ? [392, 523, 659, 784, 1047]
+    : [392, 523, 659, 784];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    const osc2 = ctx.createOscillator(); const g2 = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc2.connect(g2); g2.connect(ctx.destination);
+    osc.type = "sawtooth"; osc2.type = "square";
+    const t = ctx.currentTime + i * 0.18;
+    osc.frequency.setValueAtTime(freq, t);
+    osc2.frequency.setValueAtTime(freq * 0.5, t);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.35, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    g2.gain.setValueAtTime(0.12, t);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc.start(t); osc.stop(t + 0.3);
+    osc2.start(t); osc2.stop(t + 0.28);
+  });
+  if (big) {
+    // Snare drum hit at the end
+    const sr = ctx.sampleRate; const dur = 0.25;
+    const buf = ctx.createBuffer(1, sr * dur, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    const noise = ctx.createBufferSource(); noise.buffer = buf;
+    const snareG = ctx.createGain();
+    snareG.gain.setValueAtTime(0.8, ctx.currentTime + notes.length * 0.18);
+    noise.connect(snareG); snareG.connect(ctx.destination);
+    noise.start(ctx.currentTime + notes.length * 0.18);
+  }
+}
+
+// ── Confetti canvas component ──
+type ConfettiPiece = {
+  x: number; y: number; vx: number; vy: number;
+  w: number; h: number; color: string; rot: number; rotV: number;
+};
+const CONFETTI_COLORS = ["#FFD700","#FF6B35","#00FF88","#FF1493","#00BFFF","#FF4500","#ADFF2F","#FF69B4","#fff","#f0f"];
+
+function ConfettiCanvas({ active, onDone }: { active: boolean; onDone: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const count = 140;
+    const pieces: ConfettiPiece[] = Array.from({ length: count }, () => ({
+      x: Math.random() * canvas.width,
+      y: -Math.random() * canvas.height * 0.5 - 20,
+      vx: (Math.random() - 0.5) * 7,
+      vy: Math.random() * 4 + 3,
+      w: Math.random() * 12 + 6,
+      h: Math.random() * 7 + 3,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 0.25,
+    }));
+    let frame = 0;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let allBelow = true;
+      for (const p of pieces) {
+        p.x += p.vx + Math.sin(frame * 0.03 + p.rotV) * 0.8;
+        p.y += p.vy;
+        p.vy += 0.08;
+        p.rot += p.rotV;
+        if (p.y < canvas.height + 30) allBelow = false;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      frame++;
+      if (frame < 220 && !allBelow) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        onDone();
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [active, onDone]);
+
+  if (!active) return null;
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: "fixed", inset: 0, zIndex: 500, pointerEvents: "none" }}
+    />
+  );
+}
+
 async function apiCall(path: string, opts?: RequestInit) {
   try {
     const res = await fetch(`/api${path}`, opts);
@@ -164,6 +268,8 @@ export default function App() {
   const [showInviteScreen, setShowInviteScreen] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [bonusCelebration, setBonusCelebration] = useState<{ amount: number; big: boolean } | null>(null);
+  const [confettiActive, setConfettiActive] = useState(false);
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
 
@@ -171,6 +277,22 @@ export default function App() {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
+
+  const triggerBonus = useCallback(async (amount: number) => {
+    const big = amount >= 5;
+    playFanfareSound(big);
+    setConfettiActive(true);
+    setBonusCelebration({ amount, big });
+    if (userId) {
+      const data = await apiCall(`/users/${userId}/credit-plays`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      if (data?.user) setPlaysRemaining(data.user.playsRemaining);
+    }
+    setTimeout(() => setBonusCelebration(null), 3500);
+  }, [userId]);
 
   const reCalc = useCallback(() => setBounds(calcBounds()), []);
   useEffect(() => {
@@ -265,9 +387,17 @@ export default function App() {
       setTimeout(() => {
         setJustOkBall(null);
         const next = rowIdx + 1;
+        // ── Bônus por linha ──
+        // Completar a 4ª linha (rowIdx=3) → +1 jogada
+        // Completar a 5ª linha (rowIdx=4) → +5 jogadas
+        if (rowIdx === 3) {
+          triggerBonus(1);
+        } else if (rowIdx === 4) {
+          triggerBonus(5);
+        }
         if (next >= TOTAL_ROWS) {
           setGameActive(false); setCurrentRow(0);
-          showToast("🏆 Parabéns! Você chegou ao fim!");
+          showToast("🏆 Parabéns! Você completou todas as linhas!");
         } else {
           setCurrentRow(next); setLocked(false);
         }
@@ -517,6 +647,61 @@ export default function App() {
       {showInviteScreen && userId && (
         <InviteScreen userId={userId} onClose={() => setShowInviteScreen(false)} />
       )}
+
+      {/* ── CONFETE ── */}
+      <ConfettiCanvas active={confettiActive} onDone={() => setConfettiActive(false)} />
+
+      {/* ── CELEBRAÇÃO DE BÔNUS ── */}
+      {bonusCelebration && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 400,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            background: bonusCelebration.big
+              ? "linear-gradient(135deg,#1a0033,#3d006b,#1a0033)"
+              : "linear-gradient(135deg,#1a2a00,#2d5000,#1a2a00)",
+            border: `3px solid ${bonusCelebration.big ? "#FFD700" : "#7FFF00"}`,
+            borderRadius: 24,
+            padding: "28px 40px",
+            textAlign: "center",
+            boxShadow: `0 0 60px 20px ${bonusCelebration.big ? "rgba(255,180,0,0.6)" : "rgba(80,255,0,0.4)"}`,
+            animation: "bonusPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275)",
+          }}>
+            <div style={{ fontSize: bonusCelebration.big ? 52 : 44, lineHeight: 1, marginBottom: 6 }}>
+              {bonusCelebration.big ? "🏆🎺🎉" : "⭐🎺"}
+            </div>
+            <div style={{
+              color: bonusCelebration.big ? "#FFD700" : "#7FFF00",
+              fontSize: bonusCelebration.big ? 48 : 40,
+              fontWeight: 900,
+              lineHeight: 1,
+              textShadow: `0 0 20px ${bonusCelebration.big ? "#FFD700" : "#7FFF00"}`,
+              letterSpacing: 2,
+            }}>
+              +{bonusCelebration.amount} JOGADA{bonusCelebration.amount > 1 ? "S" : ""}!
+            </div>
+            <div style={{
+              color: "#fff",
+              fontSize: 18,
+              fontWeight: 700,
+              marginTop: 8,
+              opacity: 0.9,
+            }}>
+              {bonusCelebration.big ? "INCRÍVEL! Você chegou à 5ª linha!" : "Muito bem! Você chegou à 4ª linha!"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes bonusPop {
+          0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; }
+          70%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
