@@ -16,7 +16,6 @@ const TOUCH_CALIB = false;
 // JOGADAS number "12":   x=786-881 (xF=0.699-0.783), y=240-274 (yF=0.110-0.126)
 // CONVIDAR AGORA button: x=764-1000 (xF=0.679-0.889), y=1286-1310 (yF=0.591-0.602)
 const UI = {
-  jogadasCover: { x: 0.618, y: 0.249, w: 0.285, h: 0.082 },  // black mask over "JOGADAS 12 +" image text (from WA screenshot scan)
   jogadasNum:   { x: 0.675, y: 0.188, w: 0.130, h: 0.048 },  // real counter overlay
   jogadasPlus:  { x: 0.795, y: 0.188, w: 0.080, h: 0.048 },  // "+" buy button
   convidar:     { x: 0.608, y: 0.569, w: 0.272, h: 0.052 },  // CONVIDAR AGORA button
@@ -310,19 +309,6 @@ export default function App() {
         src={golDaSorteImg}
         alt="Gol da Sorte"
         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-      />
-
-      {/* ══════════════════════════════════════════════
-          BLACK MASK — cobre o texto estático "JOGADAS 12 +" da imagem
-          Posição calculada do screenshot real (826×1280): y=370-392 → yF≈0.249-0.331
-          ══════════════════════════════════════════════ */}
-      <div
-        style={{
-          ...ov(UI.jogadasCover.x, UI.jogadasCover.y, UI.jogadasCover.w, UI.jogadasCover.h),
-          zIndex: 25,
-          background: DEBUG ? "rgba(255,0,255,0.5)" : "#000000",
-          pointerEvents: "none",
-        }}
       />
 
       {/* ══════════════════════════════════════════════
