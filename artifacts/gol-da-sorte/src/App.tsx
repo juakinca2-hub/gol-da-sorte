@@ -228,26 +228,30 @@ export default function App() {
     setJogarLit(true);
     setTimeout(() => setJogarLit(false), 400);
 
-    const data = await apiCall(`/users/${userId}/use-play`, { method: "POST" });
-    if (data?.user) {
-      setPlaysRemaining(data.user.playsRemaining);
-      if (data.user.referralUnlocked && !referralUnlocked) {
-        setReferralUnlocked(true);
-        showToast("🎉 INDIQUE AMIGOS desbloqueado!");
-      }
-    }
-
     setWrongBalls(randomWrongBalls());
     setCurrentRow(0); setErrorBall(null); setJustOkBall(null);
     setCorrectPicks([]); setLocked(false); setGameActive(true);
   };
 
-  const handleBallClick = (rowIdx: number, ballIdx: number) => {
+  const handleBallClick = async (rowIdx: number, ballIdx: number) => {
     if (!gameActive || rowIdx !== currentRow || locked) return;
     setLocked(true);
     if (wrongBalls[rowIdx].includes(ballIdx)) {
       playBombSound();
       setErrorBall({ row: rowIdx, ball: ballIdx });
+
+      // Desconta 1 jogada ao errar
+      if (userId) {
+        const data = await apiCall(`/users/${userId}/use-play`, { method: "POST" });
+        if (data?.user) {
+          setPlaysRemaining(data.user.playsRemaining);
+          if (data.user.referralUnlocked && !referralUnlocked) {
+            setReferralUnlocked(true);
+            showToast("🎉 INDIQUE AMIGOS desbloqueado!");
+          }
+        }
+      }
+
       setTimeout(() => {
         setErrorBall(null); setJustOkBall(null);
         setCorrectPicks([]); setCurrentRow(0);
