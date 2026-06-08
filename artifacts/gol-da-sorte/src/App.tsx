@@ -6,6 +6,8 @@ const NAT_W = 1125;
 const NAT_H = 2175;
 const NAT_RATIO = NAT_W / NAT_H;
 
+//teste kingame
+
 // ── Modes ──
 // Set TOUCH_CALIB = true to enter calibration mode:
 //   Touch the CENTER of each ball → write down the yFrac shown → send to developer
