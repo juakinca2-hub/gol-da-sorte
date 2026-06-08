@@ -1,30 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import golDaSorteImg from "@assets/IMG_7715_1780523556282.jpeg";
+import RegisterScreen from "./components/RegisterScreen";
+import PurchaseModal from "./components/PurchaseModal";
+import InviteScreen from "./components/InviteScreen";
 
 // ── Image natural dimensions (confirmed 1125 × 2175) ──
 const NAT_W = 1125;
 const NAT_H = 2175;
 const NAT_RATIO = NAT_W / NAT_H;
 
-//teste kingame
-
-// ── Modes ──
-// Set TOUCH_CALIB = true to enter calibration mode:
-//   Touch the CENTER of each ball → write down the yFrac shown → send to developer
-const TOUCH_CALIB = false;
 const DEBUG = false;
+const TOUCH_CALIB = false;
 
-// ─────────────────────────────────────────────────────────────────
-// ROWS — positions as fractions of rendered image (0 = top, 1 = bottom)
-// y: [top, bottom]   x: [[left,right], [left,right], [left,right]]
-// Row 0 = bottom (nearest JOGAR), Row 5 = top (prize)
-// ─────────────────────────────────────────────────────────────────
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
-// Positions confirmed by Canvas pixel scan of original image (1125×2175)
-// Plain ball X centers: 0.138 / 0.251 / 0.364  (ball width ≈ 0.095, gap ≈ 0.018)
-// VALENDO ball X centers: 0.257 / 0.381 / 0.490
-// Y centers (device calibration + pixel scan): R0=0.806 R1=0.696 R2=0.586 R3=0.451 R4=0.359 R5=0.255
 const ROWS: RowDef[] = [
   { label: "R0", y: [0.764, 0.848], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
   { label: "R1", y: [0.654, 0.738], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
@@ -34,7 +23,6 @@ const ROWS: RowDef[] = [
   { label: "R5", y: [0.213, 0.297], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
 ];
 
-// Rows 0,1,5 → 1 wrong ball (2 correct); Rows 2,3,4 → 2 wrong (1 correct)
 const ROW_WRONG_COUNT = [1, 1, 2, 2, 2, 1];
 const ROW_COLORS = ["#ff0", "#0ff", "#0f0", "#f80", "#f0f", "#fff"];
 const TOTAL_ROWS = ROWS.length;
@@ -66,7 +54,6 @@ function calcBounds(): Bounds {
   return { x, y, w, h };
 }
 
-// ── Sound helpers ──
 function getAudioCtx() {
   return new (window.AudioContext || (window as any).webkitAudioContext)();
 }
@@ -83,10 +70,8 @@ function playClickSound() {
   osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
 
-// 5 notas crescentes bem altas — toque correto
 function playCorrectSound() {
   const ctx = getAudioCtx();
-  // Dó-Mi-Sol-Dó-Mi uma oitava acima (acorde de vitória)
   const notes = [523, 659, 784, 1047, 1319];
   notes.forEach((freq, i) => {
     const osc = ctx.createOscillator();
@@ -101,11 +86,8 @@ function playCorrectSound() {
   });
 }
 
-// Explosão de bomba bem alta — toque errado
 function playBombSound() {
   const ctx = getAudioCtx();
-
-  // 1) Ruído branco (estalo da explosão)
   const sr = ctx.sampleRate;
   const dur = 0.7;
   const buf = ctx.createBuffer(1, sr * dur, sr);
@@ -116,20 +98,15 @@ function playBombSound() {
   }
   const noise = ctx.createBufferSource();
   noise.buffer = buf;
-
   const lpf = ctx.createBiquadFilter();
   lpf.type = "lowpass";
   lpf.frequency.setValueAtTime(600, ctx.currentTime);
   lpf.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + dur);
-
   const noiseGain = ctx.createGain();
   noiseGain.gain.setValueAtTime(3.5, ctx.currentTime);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-
   noise.connect(lpf); lpf.connect(noiseGain); noiseGain.connect(ctx.destination);
   noise.start(); noise.stop(ctx.currentTime + dur);
-
-  // 2) Sub-grave (thump da explosão)
   const sub = ctx.createOscillator();
   const subGain = ctx.createGain();
   sub.connect(subGain); subGain.connect(ctx.destination);
@@ -139,8 +116,6 @@ function playBombSound() {
   subGain.gain.setValueAtTime(3.0, ctx.currentTime);
   subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
   sub.start(); sub.stop(ctx.currentTime + 0.55);
-
-  // 3) Crack inicial (clique seco)
   const crack = ctx.createOscillator();
   const crackGain = ctx.createGain();
   crack.connect(crackGain); crackGain.connect(ctx.destination);
@@ -152,54 +127,31 @@ function playBombSound() {
   crack.start(); crack.stop(ctx.currentTime + 0.06);
 }
 
-// ── Pixel scanner: runs once after image loads, logs ball row positions ──
-function scanImageRows(imgEl: HTMLImageElement) {
+async function apiUsePlay(userId: number): Promise<number | null> {
   try {
-    const canvas = document.createElement("canvas");
-    canvas.width = imgEl.naturalWidth;
-    canvas.height = imgEl.naturalHeight;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-    ctx.drawImage(imgEl, 0, 0);
-    const W = imgEl.naturalWidth;
-    const H = imgEl.naturalHeight;
-
-    // ── Scan X positions at each ball row center ──
-    // Known y-centers from previous scan
-    const yCenters: Record<string, number> = {
-      R5: Math.round(0.255 * H),
-      R4: Math.round(0.359 * H),
-      R3: Math.round(0.451 * H),
-      R2: Math.round(0.587 * H),
-      R1: Math.round(0.697 * H),
-      R0: Math.round(0.806 * H),
-    };
-
-    console.log("=== X POSITION SCAN ===");
-    console.log("Image:", W, "x", H);
-
-    for (const [name, yPx] of Object.entries(yCenters)) {
-      const rowData = ctx.getImageData(0, yPx, W, 1).data;
-      const THRESH = 40;
-      let inSeg = false, segStart = 0;
-      const segs: { x1: number; x2: number; xF1: string; xF2: string; ctr: string }[] = [];
-      for (let x = 0; x < W; x++) {
-        const i = x * 4;
-        const lum = 0.299 * rowData[i] + 0.587 * rowData[i + 1] + 0.114 * rowData[i + 2];
-        if (lum > THRESH && !inSeg) { inSeg = true; segStart = x; }
-        else if (lum <= THRESH && inSeg) {
-          inSeg = false;
-          if (x - segStart > 10) { // ignore tiny segments
-            const ctr = (segStart + x) / 2;
-            segs.push({ x1: segStart, x2: x, xF1: (segStart/W).toFixed(3), xF2: (x/W).toFixed(3), ctr: (ctr/W).toFixed(3) });
-          }
-        }
-      }
-      console.log(`${name} (y=${yPx}): ${segs.map(s => `[${s.xF1}-${s.xF2}]ctr=${s.ctr}`).join("  ")}`);
-    }
-    console.log("=== END X SCAN ===");
-  } catch (e) {
-    console.log("Scan error:", e);
+    const res = await fetch(`/api/users/${userId}/use-play`, { method: "POST" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user.playsRemaining;
+  } catch {
+    return null;
   }
+}
+
+async function apiGetUser(userId: number) {
+  try {
+    const res = await fetch(`/api/users/${userId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user;
+  } catch {
+    return null;
+  }
+}
+
+function getReferralCodeFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("ref");
 }
 
 export default function App() {
@@ -209,12 +161,23 @@ export default function App() {
   const [wrongBalls, setWrongBalls] = useState<number[][]>(randomWrongBalls);
   const [errorBall, setErrorBall] = useState<{ row: number; ball: number } | null>(null);
   const [justOkBall, setJustOkBall] = useState<{ row: number; ball: number } | null>(null);
-  // All correct picks in this run — persists green trail until game over / reset
   const [correctPicks, setCorrectPicks] = useState<{ row: number; ball: number }[]>([]);
   const [jogarLit, setJogarLit] = useState(false);
   const [locked, setLocked] = useState(false);
-  // Calibration state
   const [calibTaps, setCalibTaps] = useState<{ xF: string; yF: string }[]>([]);
+
+  // ── User / referral state ──
+  const [userId, setUserId] = useState<number | null>(() => {
+    const stored = localStorage.getItem("golUserId");
+    return stored ? parseInt(stored) : null;
+  });
+  const [playsRemaining, setPlaysRemaining] = useState<number>(0);
+  const [referralUnlocked, setReferralUnlocked] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showInviteScreen, setShowInviteScreen] = useState(false);
+  const [userLoaded, setUserLoaded] = useState(false);
+
+  const referralCodeFromUrl = getReferralCodeFromUrl();
 
   const reCalc = useCallback(() => setBounds(calcBounds()), []);
 
@@ -227,7 +190,21 @@ export default function App() {
     };
   }, [reCalc]);
 
-  // Overlay style helper (position: absolute within the fixed container)
+  // Load user data when userId is set
+  useEffect(() => {
+    if (!userId) { setUserLoaded(true); return; }
+    apiGetUser(userId).then(user => {
+      if (user) {
+        setPlaysRemaining(user.playsRemaining);
+        setReferralUnlocked(user.referralUnlocked);
+      } else {
+        localStorage.removeItem("golUserId");
+        setUserId(null);
+      }
+      setUserLoaded(true);
+    });
+  }, [userId]);
+
   const ov = (xF: number, yF: number, wF: number, hF: number) => ({
     position: "absolute" as const,
     left: bounds.x + bounds.w * xF,
@@ -236,20 +213,16 @@ export default function App() {
     height: bounds.h * hF,
   });
 
-  // ── Calibration tap handler ──
   const handleCalibTap = (e: React.MouseEvent | React.TouchEvent) => {
     if (!TOUCH_CALIB) return;
     let clientX: number, clientY: number;
     if ("changedTouches" in e && e.changedTouches.length > 0) {
-      // touchend — most reliable on iOS
       clientX = e.changedTouches[0].clientX;
       clientY = e.changedTouches[0].clientY;
     } else if ("touches" in e && e.touches.length > 0) {
-      // touchstart fallback
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      // mouse click (desktop)
       clientX = (e as React.MouseEvent).clientX;
       clientY = (e as React.MouseEvent).clientY;
     }
@@ -258,12 +231,29 @@ export default function App() {
     setCalibTaps(prev => [{ xF, yF }, ...prev].slice(0, 8));
   };
 
-  // ── Game handlers ──
-  const handleJogar = () => {
+  const handleJogar = async () => {
     if (TOUCH_CALIB) return;
+
+    if (!userId) return;
+
+    if (playsRemaining <= 0) {
+      setShowPurchaseModal(true);
+      return;
+    }
+
     playClickSound();
     setJogarLit(true);
     setTimeout(() => setJogarLit(false), 400);
+
+    const newRemaining = await apiUsePlay(userId);
+    if (newRemaining !== null) {
+      setPlaysRemaining(newRemaining);
+      // Reload to get referralUnlocked status
+      apiGetUser(userId).then(user => {
+        if (user) setReferralUnlocked(user.referralUnlocked);
+      });
+    }
+
     setWrongBalls(randomWrongBalls());
     setCurrentRow(0);
     setErrorBall(null);
@@ -277,23 +267,21 @@ export default function App() {
     if (!gameActive || rowIdx !== currentRow || locked) return;
     setLocked(true);
     if (wrongBalls[rowIdx].includes(ballIdx)) {
-      // ── ERRO: bomba ──
       playBombSound();
       setErrorBall({ row: rowIdx, ball: ballIdx });
       setTimeout(() => {
         setErrorBall(null);
         setJustOkBall(null);
-        setCorrectPicks([]);          // limpa trilha de acertos
+        setCorrectPicks([]);
         setCurrentRow(0);
         setWrongBalls(randomWrongBalls());
         setLocked(false);
       }, 1600);
     } else {
-      // ── ACERTO: 5 notas crescentes ──
       playCorrectSound();
       const pick = { row: rowIdx, ball: ballIdx };
-      setCorrectPicks(prev => [...prev, pick]); // mantém verde permanente
-      setJustOkBall(pick);                       // flash de destaque
+      setCorrectPicks(prev => [...prev, pick]);
+      setJustOkBall(pick);
       setTimeout(() => {
         setJustOkBall(null);
         const next = rowIdx + 1;
@@ -308,6 +296,29 @@ export default function App() {
     }
   };
 
+  const handleRegistered = (id: number) => {
+    setUserId(id);
+    localStorage.setItem("golUserId", String(id));
+    apiGetUser(id).then(user => {
+      if (user) {
+        setPlaysRemaining(user.playsRemaining);
+        setReferralUnlocked(user.referralUnlocked);
+      }
+      setUserLoaded(true);
+    });
+  };
+
+  const handlePurchased = (newPlays: number) => {
+    setPlaysRemaining(newPlays);
+    setShowPurchaseModal(false);
+  };
+
+  if (!userLoaded) return null;
+
+  if (!userId) {
+    return <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />;
+  }
+
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "#000", overflow: "hidden" }}
@@ -318,23 +329,68 @@ export default function App() {
       <img
         src={golDaSorteImg}
         alt="Gol da Sorte"
-        onLoad={(e) => scanImageRows(e.currentTarget)}
         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
       />
+
+      {/* ── PLAYS REMAINING OVERLAY (top right area — over "JOGADAS" counter) ── */}
+      <div style={{
+        ...ov(0.596, 0.060, 0.160, 0.040),
+        display: "flex", alignItems: "center", justifyContent: "center",
+        pointerEvents: "none", zIndex: 30,
+      }}>
+        <span style={{
+          color: "#FFD700", fontWeight: 900, fontSize: Math.max(bounds.w * 0.040, 13),
+          textShadow: "0 0 8px rgba(255,200,0,0.9), 0 0 3px #000",
+          letterSpacing: 1,
+        }}>
+          {playsRemaining}
+        </span>
+      </div>
 
       {/* ── JOGAR ── */}
       <div
         onClick={handleJogar}
         style={{
           ...ov(0.030, 0.860, 0.560, 0.052),
-          position: "absolute",
           borderRadius: 8,
           cursor: "pointer",
           background: DEBUG ? "rgba(255,0,0,0.4)"
+            : playsRemaining <= 0 ? "rgba(255,60,0,0.15)"
             : jogarLit ? "rgba(255,200,50,0.45)" : "transparent",
           boxShadow: !DEBUG && jogarLit ? "0 0 24px 8px rgba(255,180,0,0.7)" : "none",
           zIndex: 10,
           border: DEBUG ? "2px solid red" : "none",
+        }}
+      />
+
+      {/* ── No plays warning overlay on JOGAR button ── */}
+      {playsRemaining <= 0 && (
+        <div style={{
+          ...ov(0.030, 0.860, 0.560, 0.052),
+          display: "flex", alignItems: "center", justifyContent: "center",
+          pointerEvents: "none", zIndex: 11,
+        }}>
+          <span style={{
+            color: "#FF6B35", fontWeight: 900,
+            fontSize: Math.max(bounds.w * 0.028, 10),
+            textShadow: "0 0 6px rgba(0,0,0,0.8)",
+            letterSpacing: 0.5,
+          }}>
+            SEM JOGADAS — COMPRAR
+          </span>
+        </div>
+      )}
+
+      {/* ── CONVIDAR AGORA button overlay ── */}
+      <div
+        onClick={() => setShowInviteScreen(true)}
+        style={{
+          ...ov(0.596, 0.397, 0.380, 0.044),
+          borderRadius: 8,
+          cursor: "pointer",
+          zIndex: 10,
+          background: DEBUG ? "rgba(0,200,0,0.3)" : "transparent",
+          border: DEBUG ? "2px solid green" : "none",
         }}
       />
 
@@ -359,7 +415,6 @@ export default function App() {
               onTouchEnd={(e) => { e.preventDefault(); handleBallClick(rowIdx, ballIdx); }}
               style={{
                 ...ov(xS, yS, xW, rowH),
-                position: "absolute",
                 borderRadius: "50%",
                 zIndex: 20,
                 display: "flex",
@@ -376,13 +431,11 @@ export default function App() {
                   {row.label}B{ballIdx}
                 </span>
               )}
-              {/* Visual circle */}
               {!DEBUG && showCircle && (
                 <div style={{
                   width: "62%",
                   height: "62%",
                   borderRadius: "50%",
-                  // Erro = vermelho escuro; acerto trail = verde; acerto flash = verde brilhante; ativo = amarelo sutil
                   background: isErr
                     ? "rgba(180,20,20,0.25)"
                     : isCorrect
@@ -406,7 +459,6 @@ export default function App() {
                   pointerEvents: "none",
                   transition: "box-shadow 0.3s ease",
                 }}>
-                  {/* Erro: 💣 bomba */}
                   {isErr && (
                     <span style={{
                       fontSize: Math.max(bounds.w * xW * 0.50, 14),
@@ -414,7 +466,6 @@ export default function App() {
                       filter: "drop-shadow(0 0 8px rgba(255,80,0,0.9))",
                     }}>💣</span>
                   )}
-                  {/* Acerto trail: ✓ discreto */}
                   {isCorrect && !isErr && (
                     <span style={{
                       fontSize: Math.max(bounds.w * xW * 0.38, 10),
@@ -434,7 +485,6 @@ export default function App() {
       {/* ── CALIBRATION OVERLAY ── */}
       {TOUCH_CALIB && (
         <>
-          {/* Instruction banner */}
           <div style={{
             position: "absolute", top: 8, left: 0, right: 0,
             textAlign: "center", zIndex: 200, pointerEvents: "none",
@@ -447,8 +497,6 @@ export default function App() {
               MODO CALIBRAÇÃO — Toque no centro de cada bola
             </span>
           </div>
-
-          {/* Tap log */}
           <div style={{
             position: "absolute", top: 40, left: 8,
             background: "rgba(0,0,0,0.88)", color: "#fff",
@@ -464,8 +512,6 @@ export default function App() {
               </div>
             ))}
           </div>
-
-          {/* Current bounds info */}
           <div style={{
             position: "absolute", bottom: 70, right: 6,
             background: "rgba(0,0,0,0.8)", color: "#aaa",
@@ -476,6 +522,22 @@ export default function App() {
             vp {window.innerWidth}×{window.innerHeight}
           </div>
         </>
+      )}
+
+      {/* ── MODALS ── */}
+      {showPurchaseModal && userId && (
+        <PurchaseModal
+          userId={userId}
+          onPurchased={handlePurchased}
+          onClose={() => setShowPurchaseModal(false)}
+        />
+      )}
+
+      {showInviteScreen && userId && (
+        <InviteScreen
+          userId={userId}
+          onClose={() => setShowInviteScreen(false)}
+        />
       )}
     </div>
   );
