@@ -16,10 +16,8 @@ const TOUCH_CALIB = false;
 // JOGADAS number "12":   x=786-881 (xF=0.699-0.783), y=240-274 (yF=0.110-0.126)
 // CONVIDAR AGORA button: x=764-1000 (xF=0.679-0.889), y=1286-1310 (yF=0.591-0.602)
 const UI = {
-  jogadasCover: { x: 0.588, y: 0.082, w: 0.310, h: 0.062 },  // solid black mask over static "JOGADAS 12 +" text
-  jogadasNum:   { x: 0.675, y: 0.188, w: 0.130, h: 0.048 },  // real counter overlay
-  jogadasPlus:  { x: 0.795, y: 0.188, w: 0.080, h: 0.048 },  // "+" buy button
-  convidar:     { x: 0.608, y: 0.569, w: 0.272, h: 0.052 },  // CONVIDAR AGORA button
+  jogadasPlus: { x: 0.795, y: 0.188, w: 0.080, h: 0.048 },  // "+" buy button
+  convidar:    { x: 0.608, y: 0.569, w: 0.272, h: 0.052 },  // CONVIDAR AGORA button
 };
 
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
@@ -296,7 +294,6 @@ export default function App() {
   }
 
   // Derived font size based on image render width
-  const numFontSize = Math.max(bounds.w * 0.040, 13);
   const smallFontSize = Math.max(bounds.w * 0.022, 9);
 
   return (
@@ -311,47 +308,6 @@ export default function App() {
         alt="Gol da Sorte"
         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
       />
-
-      {/* ══════════════════════════════════════════════
-          BLACK MASK — erases static "JOGADAS 12 +" from image
-          Covers x=786-881, y=180-300 (full label + number area)
-          ══════════════════════════════════════════════ */}
-      <div
-        style={{
-          ...ov(UI.jogadasCover.x, UI.jogadasCover.y, UI.jogadasCover.w, UI.jogadasCover.h),
-          zIndex: 25,
-          background: DEBUG ? "rgba(255,0,255,0.4)" : "#000000",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* ══════════════════════════════════════════════
-          JOGADAS counter — real play count shown over black mask
-          ══════════════════════════════════════════════ */}
-      <div
-        style={{
-          ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w, UI.jogadasNum.h),
-          zIndex: 30,
-          background: DEBUG ? "rgba(0,255,0,0.3)" : "transparent",
-          borderRadius: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: DEBUG ? "2px solid lime" : "none",
-          pointerEvents: "none",
-        }}
-      >
-        <span style={{
-          color: "#FFD700",
-          fontWeight: 900,
-          fontSize: numFontSize,
-          lineHeight: 1,
-          textShadow: "0 0 8px rgba(255,200,0,0.6)",
-          letterSpacing: 1,
-        }}>
-          {playsRemaining}
-        </span>
-      </div>
 
       {/* ══════════════════════════════════════════════
           "+" button area — buy more plays
