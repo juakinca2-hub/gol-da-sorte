@@ -89,21 +89,6 @@ export default function InviteScreen({ userId, onClose }: Props) {
 
         {!info ? (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>Carregando...</div>
-        ) : !info.referralUnlocked ? (
-          <div style={{
-            background: "rgba(255,100,0,0.1)", border: "1px solid rgba(255,100,0,0.3)",
-            borderRadius: 12, padding: 16, textAlign: "center", marginBottom: 20,
-          }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
-            <div style={{ color: "#FF8C00", fontWeight: 700, fontSize: 14 }}>
-              FUNÇÃO BLOQUEADA
-            </div>
-            <div style={{ color: "#888", fontSize: 12, marginTop: 6, lineHeight: 1.6 }}>
-              Para desbloquear:<br />
-              1. Compre pelo menos 1 pacote de jogadas<br />
-              2. Use todas as jogadas compradas
-            </div>
-          </div>
         ) : (
           <>
             <div style={{
