@@ -546,6 +546,25 @@ export default function App() {
       />
 
       {/* ══════════════════════════════════════════════
+          Vídeo promo — canto superior direito
+          Posição baseada na marcação da imagem de referência
+          xF≈0.516-0.969, yF≈0.009-0.136
+          ══════════════════════════════════════════════ */}
+      <video
+        src={`${import.meta.env.BASE_URL}promo.mp4`}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          ...ov(0.516, 0.009, 0.453, 0.127),
+          zIndex: 20,
+          objectFit: "cover",
+          borderRadius: 6,
+        }}
+      />
+
+      {/* ══════════════════════════════════════════════
           JOGADAS counter — real play count
           ══════════════════════════════════════════════ */}
       <div
