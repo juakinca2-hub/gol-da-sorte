@@ -46,4 +46,17 @@ export async function runMigrations() {
     VALUES ('valor_acumulado', '3632.00')
     ON CONFLICT (key) DO NOTHING
   `);
+
+  await db.execute(sql`
+    INSERT INTO settings (key, value) VALUES ('ug_nome', '')        ON CONFLICT (key) DO NOTHING
+  `);
+  await db.execute(sql`
+    INSERT INTO settings (key, value) VALUES ('ug_cidade_estado', '') ON CONFLICT (key) DO NOTHING
+  `);
+  await db.execute(sql`
+    INSERT INTO settings (key, value) VALUES ('ug_valor', '')       ON CONFLICT (key) DO NOTHING
+  `);
+  await db.execute(sql`
+    INSERT INTO settings (key, value) VALUES ('ug_foto', '')        ON CONFLICT (key) DO NOTHING
+  `);
 }

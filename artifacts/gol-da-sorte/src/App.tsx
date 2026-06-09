@@ -329,6 +329,9 @@ export default function App() {
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
+  const [ultimoGanhador, setUltimoGanhador] = useState<{
+    nome: string; cidadeEstado: string; valor: string; foto: string;
+  } | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showInviteScreen, setShowInviteScreen] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
@@ -393,12 +396,23 @@ export default function App() {
   }, [reCalc]);
 
   useEffect(() => {
-    apiCall("/settings/valor-acumulado").then(data => {
-      if (data?.valor) {
-        const num = parseFloat(data.valor.replace(",", "."));
+    Promise.all([
+      apiCall("/settings/valor-acumulado"),
+      apiCall("/settings/ultimo-ganhador"),
+    ]).then(([valorData, ugData]) => {
+      if (valorData?.valor) {
+        const num = parseFloat(valorData.valor.replace(",", "."));
         if (!isNaN(num)) {
           setValorAcumulado(num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         }
+      }
+      if (ugData) {
+        setUltimoGanhador({
+          nome: ugData.nome ?? "",
+          cidadeEstado: ugData.cidadeEstado ?? "",
+          valor: ugData.valor ?? "",
+          foto: ugData.foto ?? "",
+        });
       }
     });
   }, []);
@@ -648,6 +662,86 @@ export default function App() {
         }}>
           R$ {valorAcumulado}
         </span>
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          ÚLTIMO GANHADOR — tarja preta 3×3cm + dados dinâmicos
+          Avatar: xF≈0.555-0.670, yF≈0.377-0.439 (≈3×3cm)
+          Texto: xF≈0.680-0.975, yF≈0.377-0.439
+          ══════════════════════════════════════════════ */}
+      {/* Tarja preta cobrindo avatar estático */}
+      <div
+        style={{
+          ...ov(0.555, 0.377, 0.115, 0.062),
+          zIndex: 30,
+          pointerEvents: "none",
+          background: "#000",
+          borderRadius: 4,
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {ultimoGanhador?.foto ? (
+          <img
+            src={ultimoGanhador.foto}
+            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+          />
+        ) : (
+          <span style={{ fontSize: Math.max(bounds.w * 0.040, 14) }}>👤</span>
+        )}
+      </div>
+
+      {/* Tarja preta cobrindo nome/cidade/valor estáticos */}
+      <div
+        style={{
+          ...ov(0.678, 0.377, 0.297, 0.062),
+          zIndex: 30,
+          pointerEvents: "none",
+          background: "#000",
+          borderRadius: 4,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          paddingLeft: bounds.w * 0.012,
+          gap: 1,
+        }}
+      >
+        {ultimoGanhador?.nome ? (
+          <>
+            <span style={{
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: Math.max(bounds.w * 0.028, 10),
+              lineHeight: 1.2,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "100%",
+            }}>
+              {ultimoGanhador.nome}
+            </span>
+            <span style={{
+              color: "#aaa",
+              fontSize: Math.max(bounds.w * 0.022, 8),
+              lineHeight: 1.2,
+            }}>
+              {ultimoGanhador.cidadeEstado}
+            </span>
+            <span style={{
+              color: "#FFD700",
+              fontWeight: 700,
+              fontSize: Math.max(bounds.w * 0.026, 9),
+              lineHeight: 1.2,
+            }}>
+              R$ {ultimoGanhador.valor}
+            </span>
+          </>
+        ) : (
+          <span style={{ color: "#555", fontSize: Math.max(bounds.w * 0.022, 8) }}>—</span>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════
