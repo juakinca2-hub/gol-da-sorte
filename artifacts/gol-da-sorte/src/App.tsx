@@ -598,23 +598,6 @@ export default function App() {
           justifyContent: "center",
         }}
       >
-        {/* Show lock badge when not yet unlocked */}
-        {!referralUnlocked && !DEBUG && (
-          <div style={{
-            background: "rgba(0,0,0,0.65)",
-            borderRadius: 6,
-            padding: "2px 8px",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            pointerEvents: "none",
-          }}>
-            <span style={{ fontSize: smallFontSize * 1.1 }}>🔒</span>
-            <span style={{ color: "#aaa", fontSize: smallFontSize, fontWeight: 700, lineHeight: 1 }}>
-              Bloqueado
-            </span>
-          </div>
-        )}
       </div>
 
       {/* ══════════════════════════════════════════════
