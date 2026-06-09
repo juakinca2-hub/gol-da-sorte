@@ -347,12 +347,15 @@ export default function App() {
     playFanfareSound(big);
     setConfettiActive(true);
     setBonusCelebration({ amount, big });
+    // Update counter immediately (optimistic)
+    setPlaysRemaining(prev => prev + amount);
     if (userId) {
       const data = await apiCall(`/users/${userId}/credit-plays`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount }),
       });
+      // Confirm with server value
       if (data?.user) setPlaysRemaining(data.user.playsRemaining);
     }
     setTimeout(() => setBonusCelebration(null), 3500);
@@ -363,12 +366,15 @@ export default function App() {
     speakMessage("Parabéns! Você acaba de ganhar 15 jogadas! E por muito pouco você não ganha o prêmio acumulado!");
     setConfettiActive(true);
     setMegaActive(true);
+    // Update counter immediately (optimistic)
+    setPlaysRemaining(prev => prev + 15);
     if (userId) {
       const data = await apiCall(`/users/${userId}/credit-plays`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: 15 }),
       });
+      // Confirm with server value
       if (data?.user) setPlaysRemaining(data.user.playsRemaining);
     }
     setTimeout(() => setMegaActive(false), 7000);
