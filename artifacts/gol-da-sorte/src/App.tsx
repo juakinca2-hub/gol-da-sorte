@@ -3,6 +3,7 @@ import golDaSorteImg from "@assets/IMG_7715_1780523556282.jpeg";
 import RegisterScreen from "./components/RegisterScreen";
 import PurchaseModal from "./components/PurchaseModal";
 import InviteScreen from "./components/InviteScreen";
+import InstallPrompt from "./components/InstallPrompt";
 
 // ── Image natural dimensions (confirmed 1125 × 2175) ──
 const NAT_W = 1125;
@@ -728,6 +729,9 @@ export default function App() {
       {showInviteScreen && userId && (
         <InviteScreen userId={userId} onClose={() => setShowInviteScreen(false)} />
       )}
+
+      {/* ── PWA INSTALL PROMPT ── */}
+      <InstallPrompt />
 
       {/* ── CONFETE ── */}
       <ConfettiCanvas active={confettiActive} mega={megaActive} onDone={() => setConfettiActive(false)} />
