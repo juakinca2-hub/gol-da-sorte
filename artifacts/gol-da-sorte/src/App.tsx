@@ -328,6 +328,7 @@ export default function App() {
   const [playsRemaining, setPlaysRemaining] = useState<number>(0);
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
+  const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showInviteScreen, setShowInviteScreen] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
@@ -390,6 +391,17 @@ export default function App() {
       window.visualViewport?.removeEventListener("resize", reCalc);
     };
   }, [reCalc]);
+
+  useEffect(() => {
+    apiCall("/settings/valor-acumulado").then(data => {
+      if (data?.valor) {
+        const num = parseFloat(data.valor.replace(",", "."));
+        if (!isNaN(num)) {
+          setValorAcumulado(num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        }
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!userId) { setUserLoaded(true); return; }
@@ -608,6 +620,33 @@ export default function App() {
           borderRadius: 4,
         }}
       />
+
+      {/* ══════════════════════════════════════════════
+          VALOR ACUMULADO — overlay dinâmico sobre a imagem de fundo
+          Posição: painel direito, xF≈0.555-0.970, yF≈0.218-0.258
+          ══════════════════════════════════════════════ */}
+      <div
+        style={{
+          ...ov(0.555, 0.218, 0.415, 0.040),
+          zIndex: 30,
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingLeft: bounds.w * 0.020,
+        }}
+      >
+        <span style={{
+          color: "#FFD700",
+          fontWeight: 900,
+          fontSize: Math.max(bounds.w * 0.042, 14),
+          lineHeight: 1,
+          textShadow: "0 2px 8px rgba(0,0,0,0.9)",
+          letterSpacing: 0.5,
+        }}>
+          R$ {valorAcumulado}
+        </span>
+      </div>
 
       {/* ══════════════════════════════════════════════
           CONVIDAR AGORA button overlay

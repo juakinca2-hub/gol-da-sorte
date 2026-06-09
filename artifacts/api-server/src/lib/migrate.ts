@@ -31,4 +31,19 @@ export async function runMigrations() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
   `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS settings (
+      id SERIAL PRIMARY KEY,
+      key TEXT NOT NULL UNIQUE,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.execute(sql`
+    INSERT INTO settings (key, value)
+    VALUES ('valor_acumulado', '3632.00')
+    ON CONFLICT (key) DO NOTHING
+  `);
 }
