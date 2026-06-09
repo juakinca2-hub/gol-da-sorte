@@ -627,13 +627,15 @@ export default function App() {
           ══════════════════════════════════════════════ */}
       <div
         style={{
-          ...ov(0.555, 0.218, 0.415, 0.040),
+          ...ov(0.555, 0.218, 0.415, 0.042),
           zIndex: 30,
           pointerEvents: "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
           paddingLeft: bounds.w * 0.020,
+          background: "#000",
+          borderRadius: 3,
         }}
       >
         <span style={{
