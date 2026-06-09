@@ -22,8 +22,6 @@ export async function runMigrations() {
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS estado TEXT NOT NULL DEFAULT ''`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS foto_base64 TEXT`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address TEXT`);
-  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS challenge_reward_granted BOOLEAN NOT NULL DEFAULT false`);
-
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS referrals (
       id SERIAL PRIMARY KEY,

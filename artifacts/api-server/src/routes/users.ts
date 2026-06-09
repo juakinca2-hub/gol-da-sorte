@@ -190,30 +190,8 @@ router.post("/:id/purchase", async (req, res) => {
 
       const [referrer] = await db.select().from(usersTable).where(eq(usersTable.id, user.referredById));
       if (referrer) {
-        let bonusPlays = 3;
-        let challengeGranted = false;
-
-        // Check if referrer just completed the 30-friends-in-30-days challenge
-        if (!referrer.challengeRewardGranted) {
-          const thirtyDaysAgo = new Date(referrer.createdAt);
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() + 30);
-          const now = new Date();
-
-          if (now <= thirtyDaysAgo) {
-            // Count total rewarded referrals (including this new one)
-            const allRewarded = await db.select().from(referralsTable).where(
-              and(eq(referralsTable.referrerId, referrer.id), eq(referralsTable.rewarded, true))
-            );
-            if (allRewarded.length >= 30) {
-              bonusPlays += 100;
-              challengeGranted = true;
-            }
-          }
-        }
-
         await db.update(usersTable).set({
-          playsRemaining: referrer.playsRemaining + bonusPlays,
-          ...(challengeGranted ? { challengeRewardGranted: true } : {}),
+          playsRemaining: referrer.playsRemaining + 3,
         }).where(eq(usersTable.id, referrer.id));
       }
     }
@@ -239,50 +217,6 @@ router.post("/:id/credit-plays", async (req, res) => {
     .where(eq(usersTable.id, id))
     .returning();
   res.json({ user: updated, bonusGranted: amount });
-});
-
-router.get("/:id/challenge-info", async (req, res) => {
-  const id = parseInt(req.params.id);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
-  if (!user) {
-    res.status(404).json({ error: "Usuário não encontrado" });
-    return;
-  }
-
-  const CHALLENGE_GOAL = 30;
-  const CHALLENGE_DAYS = 30;
-  const CHALLENGE_REWARD = 100;
-
-  const startDate = new Date(user.createdAt);
-  const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + CHALLENGE_DAYS);
-  const now = new Date();
-
-  const msRemaining = endDate.getTime() - now.getTime();
-  const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-  const isWithinWindow = now <= endDate;
-
-  const rewardedReferrals = await db.select().from(referralsTable).where(
-    and(eq(referralsTable.referrerId, id), eq(referralsTable.rewarded, true))
-  );
-  const payingFriendsCount = rewardedReferrals.length;
-
-  const challengeCompleted = user.challengeRewardGranted;
-  const challengeExpired = !isWithinWindow && !challengeCompleted;
-  const challengeActive = isWithinWindow && !challengeCompleted;
-
-  res.json({
-    payingFriendsCount,
-    payingFriendsGoal: CHALLENGE_GOAL,
-    rewardPlays: CHALLENGE_REWARD,
-    daysRemaining,
-    daysTotal: CHALLENGE_DAYS,
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-    challengeActive,
-    challengeCompleted,
-    challengeExpired,
-  });
 });
 
 router.get("/:id/referral-info", async (req, res) => {
