@@ -327,6 +327,7 @@ export default function App() {
   });
   const [playsRemaining, setPlaysRemaining] = useState<number>(0);
   const [referralUnlocked, setReferralUnlocked] = useState(false);
+  const [totalFriends, setTotalFriends] = useState<number>(0);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showInviteScreen, setShowInviteScreen] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
@@ -392,13 +393,19 @@ export default function App() {
 
   useEffect(() => {
     if (!userId) { setUserLoaded(true); return; }
-    apiCall(`/users/${userId}`).then(data => {
-      if (data?.user) {
-        setPlaysRemaining(data.user.playsRemaining);
-        setReferralUnlocked(data.user.referralUnlocked);
+    Promise.all([
+      apiCall(`/users/${userId}`),
+      apiCall(`/users/${userId}/referral-info`),
+    ]).then(([userData, referralData]) => {
+      if (userData?.user) {
+        setPlaysRemaining(userData.user.playsRemaining);
+        setReferralUnlocked(userData.user.referralUnlocked);
       } else {
         localStorage.removeItem("golUserId");
         setUserId(null);
+      }
+      if (referralData?.totalFriends !== undefined) {
+        setTotalFriends(referralData.totalFriends);
       }
       setUserLoaded(true);
     });
@@ -493,6 +500,11 @@ export default function App() {
     }
   };
 
+  const refreshReferralCount = useCallback(async (id: number) => {
+    const data = await apiCall(`/users/${id}/referral-info`);
+    if (data?.totalFriends !== undefined) setTotalFriends(data.totalFriends);
+  }, []);
+
   const handleRegistered = (id: number) => {
     setUserId(id);
     localStorage.setItem("golUserId", String(id));
@@ -577,6 +589,43 @@ export default function App() {
           borderRadius: 4,
         }}
       />
+
+      {/* ══════════════════════════════════════════════
+          Contador de amigos indicados — acima do botão CONVIDAR
+          ══════════════════════════════════════════════ */}
+      <div
+        style={{
+          ...ov(UI.convidar.x, UI.convidar.y - 0.045, UI.convidar.w, 0.038),
+          zIndex: 30,
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 5,
+        }}
+      >
+        <div style={{
+          background: "rgba(0,0,0,0.72)",
+          border: "1px solid rgba(255,200,0,0.35)",
+          borderRadius: 20,
+          padding: "3px 10px",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+        }}>
+          <span style={{ fontSize: Math.max(bounds.w * 0.022, 9) }}>👥</span>
+          <span style={{
+            color: totalFriends > 0 ? "#FFD700" : "#888",
+            fontSize: Math.max(bounds.w * 0.022, 9),
+            fontWeight: 700,
+            lineHeight: 1,
+          }}>
+            {totalFriends > 0
+              ? `${totalFriends} amigo${totalFriends > 1 ? "s" : ""} indicado${totalFriends > 1 ? "s" : ""}`
+              : "Nenhum amigo ainda"}
+          </span>
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════════
           CONVIDAR AGORA button overlay
@@ -716,7 +765,7 @@ export default function App() {
         <PurchaseModal userId={userId} onPurchased={handlePurchased} onClose={() => setShowPurchaseModal(false)} />
       )}
       {showInviteScreen && userId && (
-        <InviteScreen userId={userId} onClose={() => setShowInviteScreen(false)} />
+        <InviteScreen userId={userId} onClose={() => { setShowInviteScreen(false); refreshReferralCount(userId); }} />
       )}
       {/* ── PWA INSTALL PROMPT ── */}
       <InstallPrompt />
