@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db, usersTable, referralsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
@@ -24,18 +24,49 @@ async function uniqueReferralCode(): Promise<string> {
   return code;
 }
 
-router.post("/register", async (req, res) => {
-  const { name, phone, referralCode } = req.body as { name: string; phone: string; referralCode?: string };
+function getClientIp(req: Request): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(",")[0];
+    return ip.trim();
+  }
+  return req.socket?.remoteAddress ?? "unknown";
+}
 
-  if (!name || !phone) {
-    res.status(400).json({ error: "name e phone são obrigatórios" });
+router.post("/register", async (req, res) => {
+  const { name, phone, cidade, estado, fotoBase64, referralCode } = req.body as {
+    name: string;
+    phone: string;
+    cidade: string;
+    estado: string;
+    fotoBase64?: string;
+    referralCode?: string;
+  };
+
+  if (!name || !phone || !cidade || !estado) {
+    res.status(400).json({ error: "Nome, telefone, cidade e estado são obrigatórios." });
     return;
   }
 
-  const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
-  if (existing.length > 0) {
-    res.status(409).json({ error: "Telefone já cadastrado" });
+  const cleanPhone = phone.replace(/\D/g, "");
+  if (cleanPhone.length < 10) {
+    res.status(400).json({ error: "Telefone inválido." });
     return;
+  }
+
+  const existingPhone = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.phone, cleanPhone));
+  if (existingPhone.length > 0) {
+    res.status(409).json({ error: "Este telefone já está cadastrado. Use 'Já tenho conta'." });
+    return;
+  }
+
+  const clientIp = getClientIp(req);
+  if (clientIp !== "unknown") {
+    const existingIp = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.ipAddress, clientIp));
+    if (existingIp.length > 0) {
+      res.status(409).json({ error: "Já existe um cadastro neste aparelho. Use 'Já tenho conta'." });
+      return;
+    }
   }
 
   let referredById: number | null = null;
@@ -50,7 +81,11 @@ router.post("/register", async (req, res) => {
 
   const [user] = await db.insert(usersTable).values({
     name,
-    phone,
+    phone: cleanPhone,
+    cidade,
+    estado: estado.toUpperCase(),
+    fotoBase64: fotoBase64 || null,
+    ipAddress: clientIp,
     referralCode: myCode,
     referredById: referredById ?? undefined,
     playsRemaining: 5,
