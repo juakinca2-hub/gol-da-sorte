@@ -591,43 +591,6 @@ export default function App() {
       />
 
       {/* ══════════════════════════════════════════════
-          Contador de amigos indicados — acima do botão CONVIDAR
-          ══════════════════════════════════════════════ */}
-      <div
-        style={{
-          ...ov(UI.convidar.x, UI.convidar.y - 0.045, UI.convidar.w, 0.038),
-          zIndex: 30,
-          pointerEvents: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 5,
-        }}
-      >
-        <div style={{
-          background: "rgba(0,0,0,0.72)",
-          border: "1px solid rgba(255,200,0,0.35)",
-          borderRadius: 20,
-          padding: "3px 10px",
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-        }}>
-          <span style={{ fontSize: Math.max(bounds.w * 0.022, 9) }}>👥</span>
-          <span style={{
-            color: totalFriends > 0 ? "#FFD700" : "#888",
-            fontSize: Math.max(bounds.w * 0.022, 9),
-            fontWeight: 700,
-            lineHeight: 1,
-          }}>
-            {totalFriends > 0
-              ? `${totalFriends} amigo${totalFriends > 1 ? "s" : ""} indicado${totalFriends > 1 ? "s" : ""}`
-              : "Nenhum amigo ainda"}
-          </span>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════
           CONVIDAR AGORA button overlay
           Pixel scan: x=764-1000 (xF≈0.679-0.889), y=1286-1310 (yF≈0.591-0.602)
           Expanded slightly for easier tapping
