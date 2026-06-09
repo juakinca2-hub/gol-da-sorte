@@ -130,7 +130,6 @@ function playBombSound() {
 
 function playFanfareSound(big: boolean) {
   const ctx = getAudioCtx();
-  // Fanfare melody: G4-C5-E5-G5 (big adds a high final note + drums)
   const notes = big
     ? [392, 523, 659, 784, 1047]
     : [392, 523, 659, 784];
@@ -152,7 +151,6 @@ function playFanfareSound(big: boolean) {
     osc2.start(t); osc2.stop(t + 0.28);
   });
   if (big) {
-    // Snare drum hit at the end
     const sr = ctx.sampleRate; const dur = 0.25;
     const buf = ctx.createBuffer(1, sr * dur, sr);
     const d = buf.getChannelData(0);
@@ -165,6 +163,69 @@ function playFanfareSound(big: boolean) {
   }
 }
 
+function playMegaFanfare() {
+  const ctx = getAudioCtx();
+  // Epic trumpet fanfare: two rising phrases + final chord
+  const phrase = [
+    { freq: 523, t: 0.00, dur: 0.18 },
+    { freq: 659, t: 0.20, dur: 0.18 },
+    { freq: 784, t: 0.40, dur: 0.18 },
+    { freq: 1047, t: 0.60, dur: 0.35 },
+    { freq: 784, t: 1.05, dur: 0.12 },
+    { freq: 880, t: 1.20, dur: 0.12 },
+    { freq: 988, t: 1.35, dur: 0.12 },
+    { freq: 1175, t: 1.50, dur: 0.55 },
+  ];
+  phrase.forEach(({ freq, t, dur }) => {
+    ["sawtooth", "square"].forEach((type, j) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = type as OscillatorType;
+      osc.frequency.setValueAtTime(freq * (j === 1 ? 0.5 : 1), ctx.currentTime + t);
+      const vol = j === 0 ? 0.45 : 0.15;
+      g.gain.setValueAtTime(0, ctx.currentTime + t);
+      g.gain.linearRampToValueAtTime(vol, ctx.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + dur + 0.05);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + dur + 0.1);
+    });
+  });
+  // Final chord at 2.2s
+  [523, 659, 784, 1047].forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + 2.2);
+    g.gain.setValueAtTime(0.3 - i * 0.05, ctx.currentTime + 2.2);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.2);
+    osc.start(ctx.currentTime + 2.2);
+    osc.stop(ctx.currentTime + 3.3);
+  });
+  // Snare rolls
+  [0.0, 0.6, 1.5, 2.2].forEach(t => {
+    const sr = ctx.sampleRate; const dur = 0.18;
+    const buf = ctx.createBuffer(1, sr * dur, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    const n = ctx.createBufferSource(); n.buffer = buf;
+    const g = ctx.createGain(); g.gain.setValueAtTime(1.2, ctx.currentTime + t);
+    n.connect(g); g.connect(ctx.destination);
+    n.start(ctx.currentTime + t); n.stop(ctx.currentTime + t + dur);
+  });
+}
+
+function speakMessage(text: string) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "pt-BR";
+  utter.rate = 0.88;
+  utter.pitch = 1.1;
+  utter.volume = 1.0;
+  // Delay a bit so fanfare starts first
+  setTimeout(() => window.speechSynthesis.speak(utter), 1400);
+}
+
 // ── Confetti canvas component ──
 type ConfettiPiece = {
   x: number; y: number; vx: number; vy: number;
@@ -172,7 +233,7 @@ type ConfettiPiece = {
 };
 const CONFETTI_COLORS = ["#FFD700","#FF6B35","#00FF88","#FF1493","#00BFFF","#FF4500","#ADFF2F","#FF69B4","#fff","#f0f"];
 
-function ConfettiCanvas({ active, onDone }: { active: boolean; onDone: () => void }) {
+function ConfettiCanvas({ active, mega, onDone }: { active: boolean; mega?: boolean; onDone: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 
@@ -183,19 +244,20 @@ function ConfettiCanvas({ active, onDone }: { active: boolean; onDone: () => voi
     const ctx = canvas.getContext("2d")!;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    const count = 140;
+    const count = mega ? 400 : 140;
     const pieces: ConfettiPiece[] = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
-      y: -Math.random() * canvas.height * 0.5 - 20,
-      vx: (Math.random() - 0.5) * 7,
-      vy: Math.random() * 4 + 3,
-      w: Math.random() * 12 + 6,
-      h: Math.random() * 7 + 3,
+      y: -Math.random() * canvas.height * (mega ? 1.2 : 0.5) - 20,
+      vx: (Math.random() - 0.5) * (mega ? 12 : 7),
+      vy: Math.random() * (mega ? 6 : 4) + 3,
+      w: Math.random() * (mega ? 18 : 12) + 6,
+      h: Math.random() * (mega ? 10 : 7) + 3,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       rot: Math.random() * Math.PI * 2,
       rotV: (Math.random() - 0.5) * 0.25,
     }));
     let frame = 0;
+    const maxFrames = mega ? 420 : 220;
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       let allBelow = true;
@@ -213,7 +275,7 @@ function ConfettiCanvas({ active, onDone }: { active: boolean; onDone: () => voi
         ctx.restore();
       }
       frame++;
-      if (frame < 220 && !allBelow) {
+      if (frame < maxFrames && !allBelow) {
         rafRef.current = requestAnimationFrame(animate);
       } else {
         onDone();
@@ -270,6 +332,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [bonusCelebration, setBonusCelebration] = useState<{ amount: number; big: boolean } | null>(null);
   const [confettiActive, setConfettiActive] = useState(false);
+  const [megaActive, setMegaActive] = useState(false);
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
 
@@ -292,6 +355,22 @@ export default function App() {
       if (data?.user) setPlaysRemaining(data.user.playsRemaining);
     }
     setTimeout(() => setBonusCelebration(null), 3500);
+  }, [userId]);
+
+  const triggerMegaBonus = useCallback(async () => {
+    playMegaFanfare();
+    speakMessage("Parabéns! Você acaba de ganhar 15 jogadas! E por muito pouco você não ganha o prêmio acumulado!");
+    setConfettiActive(true);
+    setMegaActive(true);
+    if (userId) {
+      const data = await apiCall(`/users/${userId}/credit-plays`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 15 }),
+      });
+      if (data?.user) setPlaysRemaining(data.user.playsRemaining);
+    }
+    setTimeout(() => setMegaActive(false), 7000);
   }, [userId]);
 
   const reCalc = useCallback(() => setBounds(calcBounds()), []);
@@ -390,14 +469,16 @@ export default function App() {
         // ── Bônus por linha ──
         // Completar a 4ª linha (rowIdx=3) → +1 jogada
         // Completar a 5ª linha (rowIdx=4) → +5 jogadas
+        // Completar a 6ª linha (rowIdx=5) → +15 jogadas MEGA
         if (rowIdx === 3) {
           triggerBonus(1);
         } else if (rowIdx === 4) {
           triggerBonus(5);
+        } else if (rowIdx === 5) {
+          triggerMegaBonus();
         }
         if (next >= TOTAL_ROWS) {
           setGameActive(false); setCurrentRow(0);
-          showToast("🏆 Parabéns! Você completou todas as linhas!");
         } else {
           setCurrentRow(next); setLocked(false);
         }
@@ -649,7 +730,7 @@ export default function App() {
       )}
 
       {/* ── CONFETE ── */}
-      <ConfettiCanvas active={confettiActive} onDone={() => setConfettiActive(false)} />
+      <ConfettiCanvas active={confettiActive} mega={megaActive} onDone={() => setConfettiActive(false)} />
 
       {/* ── CELEBRAÇÃO DE BÔNUS ── */}
       {bonusCelebration && (
@@ -695,10 +776,69 @@ export default function App() {
         </div>
       )}
 
+      {/* ── MEGA CELEBRAÇÃO — última linha +15 jogadas ── */}
+      {megaActive && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 600,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.75)",
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            background: "linear-gradient(135deg,#0a0020,#2d006b,#4b0082,#2d006b,#0a0020)",
+            border: "4px solid #FFD700",
+            borderRadius: 28,
+            padding: "36px 32px",
+            textAlign: "center",
+            maxWidth: 320,
+            width: "88%",
+            boxShadow: "0 0 80px 30px rgba(255,180,0,0.7), 0 0 200px 60px rgba(120,0,255,0.4)",
+            animation: "megaPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275)",
+          }}>
+            <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 10 }}>
+              🏆🎺🎉🎊⭐
+            </div>
+            <div style={{
+              color: "#FFD700",
+              fontSize: 30,
+              fontWeight: 900,
+              lineHeight: 1.15,
+              textShadow: "0 0 30px #FFD700, 0 0 60px rgba(255,200,0,0.5)",
+              letterSpacing: 1,
+              marginBottom: 12,
+            }}>
+              PARABÉNS!<br />
+              VOCÊ ACABA DE<br />
+              GANHAR 15 JOGADAS!
+            </div>
+            <div style={{
+              background: "rgba(255,215,0,0.15)",
+              border: "2px solid rgba(255,215,0,0.5)",
+              borderRadius: 14,
+              padding: "10px 14px",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1.4,
+            }}>
+              🍀 E POR MUITO POUCO<br />
+              VOCÊ NÃO GANHOU<br />
+              O PRÊMIO ACUMULADO!
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes bonusPop {
           0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; }
           70%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes megaPop {
+          0%   { transform: scale(0.2) rotate(-6deg); opacity: 0; }
+          60%  { transform: scale(1.06) rotate(2deg); opacity: 1; }
+          80%  { transform: scale(0.97) rotate(-1deg); }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
       `}</style>
