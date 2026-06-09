@@ -627,7 +627,7 @@ export default function App() {
           ══════════════════════════════════════════════ */}
       <div
         style={{
-          ...ov(0.555, 0.218, 0.415, 0.042),
+          ...ov(0.555, 0.255, 0.415, 0.042),
           zIndex: 30,
           pointerEvents: "none",
           display: "flex",
