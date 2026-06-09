@@ -4,6 +4,7 @@ import RegisterScreen from "./components/RegisterScreen";
 import PurchaseModal from "./components/PurchaseModal";
 import InviteScreen from "./components/InviteScreen";
 import InstallPrompt from "./components/InstallPrompt";
+import ChallengePanel from "./components/ChallengePanel";
 
 // ── Image natural dimensions (confirmed 1125 × 2175) ──
 const NAT_W = 1125;
@@ -329,6 +330,7 @@ export default function App() {
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showInviteScreen, setShowInviteScreen] = useState(false);
+  const [showChallengePanel, setShowChallengePanel] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [bonusCelebration, setBonusCelebration] = useState<{ amount: number; big: boolean } | null>(null);
@@ -728,12 +730,41 @@ export default function App() {
         </div>
       )}
 
+      {/* ── BOTÃO DESAFIO (canto superior esquerdo) ── */}
+      <button
+        onClick={() => setShowChallengePanel(true)}
+        style={{
+          position: "fixed",
+          top: 14,
+          left: 14,
+          zIndex: 80,
+          background: "linear-gradient(135deg,#1a0035,#3d006b)",
+          border: "1.5px solid rgba(255,215,0,0.5)",
+          borderRadius: 12,
+          padding: "7px 12px",
+          color: "#FFD700",
+          fontSize: 13,
+          fontWeight: 900,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          boxShadow: "0 2px 12px rgba(100,0,200,0.4)",
+          letterSpacing: 0.5,
+        }}
+      >
+        🏆 <span style={{ fontSize: 11 }}>DESAFIO</span>
+      </button>
+
       {/* ── MODALS ── */}
       {showPurchaseModal && userId && (
         <PurchaseModal userId={userId} onPurchased={handlePurchased} onClose={() => setShowPurchaseModal(false)} />
       )}
       {showInviteScreen && userId && (
         <InviteScreen userId={userId} onClose={() => setShowInviteScreen(false)} />
+      )}
+      {showChallengePanel && userId && (
+        <ChallengePanel userId={userId} onClose={() => setShowChallengePanel(false)} />
       )}
 
       {/* ── PWA INSTALL PROMPT ── */}

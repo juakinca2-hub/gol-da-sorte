@@ -17,6 +17,7 @@ export const usersTable = pgTable("users", {
   hasPaid: boolean("has_paid").notNull().default(false),
   paidPlaysUsed: integer("paid_plays_used").notNull().default(0),
   referralUnlocked: boolean("referral_unlocked").notNull().default(false),
+  challengeRewardGranted: boolean("challenge_reward_granted").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
