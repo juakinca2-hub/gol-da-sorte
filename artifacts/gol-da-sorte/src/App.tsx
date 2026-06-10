@@ -330,7 +330,7 @@ export default function App() {
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(() => new URLSearchParams(window.location.search).get("admin") === "1");
   const adminTapCount = useRef(0);
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ultimoGanhador, setUltimoGanhador] = useState<{
