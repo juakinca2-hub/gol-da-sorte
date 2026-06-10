@@ -59,4 +59,15 @@ export async function runMigrations() {
   await db.execute(sql`
     INSERT INTO settings (key, value) VALUES ('ug_foto', '')        ON CONFLICT (key) DO NOTHING
   `);
+
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT false`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ultimo_login TIMESTAMP`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS saldo INTEGER NOT NULL DEFAULT 0`);
+
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('premiacao_ativa', 'true')     ON CONFLICT (key) DO NOTHING`);
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('bonus_row3', '1')              ON CONFLICT (key) DO NOTHING`);
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('bonus_row4', '5')              ON CONFLICT (key) DO NOTHING`);
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('bonus_row5', '15')             ON CONFLICT (key) DO NOTHING`);
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('whatsapp_atendimento', '')     ON CONFLICT (key) DO NOTHING`);
+  await db.execute(sql`INSERT INTO settings (key, value) VALUES ('valor_pago_premios', '0')      ON CONFLICT (key) DO NOTHING`);
 }

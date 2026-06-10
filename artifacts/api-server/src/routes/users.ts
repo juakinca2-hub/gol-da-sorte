@@ -119,6 +119,8 @@ router.get("/:id", async (req, res) => {
     res.status(404).json({ error: "Usuário não encontrado" });
     return;
   }
+  // Update last login for online tracking
+  await db.update(usersTable).set({ ultimoLogin: new Date() }).where(eq(usersTable.id, id));
   res.json({ user });
 });
 
