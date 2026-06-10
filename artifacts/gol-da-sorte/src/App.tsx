@@ -4,6 +4,7 @@ import RegisterScreen from "./components/RegisterScreen";
 import PurchaseModal from "./components/PurchaseModal";
 import InviteScreen from "./components/InviteScreen";
 import InstallPrompt from "./components/InstallPrompt";
+import AdminPanel from "./components/AdminPanel";
 
 // ── Image natural dimensions (confirmed 1125 × 2175) ──
 const NAT_W = 1125;
@@ -329,6 +330,9 @@ export default function App() {
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
+  const [showAdmin, setShowAdmin] = useState(false);
+  const adminTapCount = useRef(0);
+  const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ultimoGanhador, setUltimoGanhador] = useState<{
     nome: string; cidadeEstado: string; valor: string; foto: string;
   } | null>(null);
@@ -887,6 +891,21 @@ export default function App() {
       {/* ── PWA INSTALL PROMPT ── */}
       <InstallPrompt />
 
+      {/* ── ACESSO ADMIN — toque triplo no canto inferior esquerdo ── */}
+      <div
+        onClick={() => {
+          adminTapCount.current += 1;
+          if (adminTapTimer.current) clearTimeout(adminTapTimer.current);
+          if (adminTapCount.current >= 3) {
+            adminTapCount.current = 0;
+            setShowAdmin(true);
+          } else {
+            adminTapTimer.current = setTimeout(() => { adminTapCount.current = 0; }, 1200);
+          }
+        }}
+        style={{ position: "fixed", bottom: 0, left: 0, width: 60, height: 60, zIndex: 500, cursor: "default" }}
+      />
+
       {/* ── CONFETE ── */}
       <ConfettiCanvas active={confettiActive} mega={megaActive} onDone={() => setConfettiActive(false)} />
 
@@ -986,6 +1005,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* ── PAINEL ADMIN ── */}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
 
       <style>{`
         @keyframes bonusPop {
