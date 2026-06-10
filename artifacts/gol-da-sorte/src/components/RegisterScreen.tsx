@@ -19,25 +19,64 @@ interface Props {
   onRegistered: (userId: number) => void;
 }
 
-const inputStyle: React.CSSProperties = {
+const G = {
+  bg: "linear-gradient(170deg, #050505 0%, #0e0c00 50%, #050505 100%)",
+  gold: "#FFD700",
+  orange: "#FF8C00",
+  card: "rgba(255,255,255,0.05)",
+  border: "rgba(255,200,0,0.25)",
+  borderFocus: "rgba(255,200,0,0.7)",
+  text: "#ffffff",
+  muted: "#888888",
+  error: "#ff5555",
+  success: "#55ff88",
+};
+
+const fieldStyle: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
-  background: "rgba(255,255,255,0.07)",
-  border: "1.5px solid rgba(255,200,0,0.3)",
-  borderRadius: 10,
-  padding: "12px 14px",
-  color: "#fff",
+  background: "rgba(255,255,255,0.06)",
+  border: `1.5px solid ${G.border}`,
+  borderRadius: 12,
+  padding: "13px 16px",
+  color: G.text,
   fontSize: 15,
   outline: "none",
+  transition: "border-color 0.2s",
+  fontFamily: "inherit",
 };
 
 const labelStyle: React.CSSProperties = {
-  color: "#aaa",
+  color: G.muted,
   fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
   display: "block",
-  marginBottom: 5,
-  letterSpacing: 0.5,
+  marginBottom: 6,
+  textTransform: "uppercase",
 };
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function formatPhone(val: string) {
+  const digits = val.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
 
 export default function RegisterScreen({ referralCode, onRegistered }: Props) {
   const [mode, setMode] = useState<"choice" | "register" | "login">("choice");
@@ -49,18 +88,18 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
   const [estado, setEstado] = useState("");
   const [fotoBase64, setFotoBase64] = useState<string | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [aceitaTermos, setAceitaTermos] = useState(false);
+  const [maisDe18, setMaisDe18] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const formatPhone = (val: string) => {
-    const digits = val.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
+  const phoneMatch =
+    phoneConfirm.length > 0 && phone === phoneConfirm;
+  const phoneMismatch =
+    phoneConfirm.length > 0 && phone !== phoneConfirm;
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,7 +108,6 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
       setFotoPreview(result);
-
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -79,7 +117,7 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
         canvas.height = img.height * scale;
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        setFotoBase64(canvas.toDataURL("image/jpeg", 0.7));
+        setFotoBase64(canvas.toDataURL("image/jpeg", 0.75));
       };
       img.src = result;
     };
@@ -88,11 +126,13 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
 
   const handleRegister = async () => {
     setError("");
-    if (!name.trim()) { setError("Informe seu nome."); return; }
+    if (!name.trim()) { setError("Informe seu nome completo."); return; }
     if (phone.replace(/\D/g, "").length < 10) { setError("Telefone incompleto."); return; }
     if (phone !== phoneConfirm) { setError("Os telefones não conferem."); return; }
     if (!cidade.trim()) { setError("Informe sua cidade."); return; }
     if (!estado) { setError("Selecione seu estado."); return; }
+    if (!maisDe18) { setError("Você precisa ter mais de 18 anos para jogar."); return; }
+    if (!aceitaTermos) { setError("Aceite os termos para continuar."); return; }
 
     setLoading(true);
     try {
@@ -146,46 +186,82 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
   };
 
   return (
-    <div style={{
-      position: "fixed", inset: 0,
-      background: "linear-gradient(160deg, #0a0a0a 0%, #1a1200 60%, #0a0a0a 100%)",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "flex-start", zIndex: 9999,
-      overflowY: "auto", padding: "24px 24px 40px",
-    }}>
-      <div style={{ marginBottom: 24, textAlign: "center", marginTop: 16 }}>
-        <div style={{ fontSize: 46, marginBottom: 6 }}>⚽</div>
-        <div style={{ color: "#FFD700", fontSize: 26, fontWeight: 900, letterSpacing: 2, textShadow: "0 0 20px rgba(255,200,0,0.5)" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: G.bg,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        overflowY: "auto",
+        zIndex: 9999,
+        padding: "28px 20px 48px",
+      }}
+    >
+      {/* Logo */}
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 8 }}>⚽</div>
+        <div
+          style={{
+            color: G.gold,
+            fontSize: 26,
+            fontWeight: 900,
+            letterSpacing: 3,
+            textShadow: "0 0 24px rgba(255,200,0,0.45)",
+          }}
+        >
           GOL DA SORTE
         </div>
         {referralCode && (
-          <div style={{
-            marginTop: 10, background: "rgba(255,200,0,0.15)", border: "1px solid rgba(255,200,0,0.4)",
-            borderRadius: 10, padding: "7px 14px", color: "#FFD700", fontSize: 13,
-          }}>
+          <div
+            style={{
+              marginTop: 12,
+              background: "rgba(255,200,0,0.12)",
+              border: `1px solid rgba(255,200,0,0.35)`,
+              borderRadius: 10,
+              padding: "8px 16px",
+              color: G.gold,
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
             🎁 Você ganhou <strong>5 jogadas grátis</strong>!
           </div>
         )}
       </div>
 
+      {/* ── CHOICE ── */}
       {mode === "choice" && (
-        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 14 }}>
           <button
             onClick={() => setMode("register")}
             style={{
-              background: "linear-gradient(135deg, #FFD700, #FF8C00)",
-              color: "#000", border: "none", borderRadius: 12, padding: "16px",
-              fontSize: 16, fontWeight: 900, cursor: "pointer", letterSpacing: 1,
+              background: `linear-gradient(135deg, ${G.gold}, ${G.orange})`,
+              color: "#000",
+              border: "none",
+              borderRadius: 14,
+              padding: "18px",
+              fontSize: 17,
+              fontWeight: 900,
+              cursor: "pointer",
+              letterSpacing: 1,
+              boxShadow: "0 4px 20px rgba(255,180,0,0.3)",
             }}
           >
-            CRIAR CONTA
+            ⚽ CRIAR CONTA
           </button>
           <button
-            onClick={() => setMode("login")}
+            onClick={() => { setMode("login"); setError(""); setPhone(""); }}
             style={{
-              background: "transparent", color: "#FFD700",
-              border: "2px solid rgba(255,200,0,0.5)", borderRadius: 12, padding: "14px",
-              fontSize: 16, fontWeight: 700, cursor: "pointer",
+              background: "transparent",
+              color: G.gold,
+              border: `2px solid rgba(255,200,0,0.4)`,
+              borderRadius: 14,
+              padding: "16px",
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
             }}
           >
             JÁ TENHO CONTA
@@ -193,152 +269,316 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
         </div>
       )}
 
+      {/* ── CADASTRO ── */}
       {mode === "register" && (
-        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-
-          {/* FOTO */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: 90, height: 90, borderRadius: "50%",
-                background: fotoPreview ? "transparent" : "rgba(255,255,255,0.07)",
-                border: "2px dashed rgba(255,200,0,0.5)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", overflow: "hidden", position: "relative",
-              }}
-            >
-              {fotoPreview
-                ? <img src={fotoPreview} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ fontSize: 32 }}>📷</span>
-              }
-            </div>
-            <span style={{ color: "#888", fontSize: 12 }}>Toque para adicionar sua foto</span>
-            <input ref={fileInputRef} type="file" accept="image/*" capture="user" style={{ display: "none" }} onChange={handleFotoChange} />
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 380,
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              color: G.gold,
+              fontWeight: 900,
+              fontSize: 17,
+              textAlign: "center",
+              letterSpacing: 1,
+              marginBottom: 4,
+            }}
+          >
+            CRIAR CONTA
           </div>
 
-          {/* NOME */}
-          <div>
-            <label style={labelStyle}>SEU NOME COMPLETO</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: João Silva"
-              style={inputStyle}
-            />
-          </div>
-
-          {/* TELEFONE */}
-          <div>
-            <label style={labelStyle}>TELEFONE (WHATSAPP)</label>
-            <input
-              value={phone}
-              onChange={e => setPhone(formatPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              inputMode="tel"
-              style={inputStyle}
-            />
-          </div>
-
-          {/* CONFIRMAÇÃO DO TELEFONE */}
-          <div>
-            <label style={labelStyle}>CONFIRME O TELEFONE</label>
-            <input
-              value={phoneConfirm}
-              onChange={e => setPhoneConfirm(formatPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              inputMode="tel"
-              style={{
-                ...inputStyle,
-                borderColor: phoneConfirm && phone !== phoneConfirm
-                  ? "rgba(255,80,80,0.7)"
-                  : phoneConfirm && phone === phoneConfirm
-                  ? "rgba(80,255,80,0.7)"
-                  : "rgba(255,200,0,0.3)",
-              }}
-            />
-            {phoneConfirm && phone !== phoneConfirm && (
-              <span style={{ color: "#ff6060", fontSize: 11, marginTop: 3, display: "block" }}>Telefones não conferem</span>
-            )}
-            {phoneConfirm && phone === phoneConfirm && (
-              <span style={{ color: "#80ff80", fontSize: 11, marginTop: 3, display: "block" }}>✓ Telefones conferem</span>
-            )}
-          </div>
-
-          {/* CIDADE + ESTADO */}
-          <div style={{ display: "flex", gap: 8 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>CIDADE</label>
-              <input
-                value={cidade}
-                onChange={e => setCidade(e.target.value)}
-                placeholder="Ex: São Paulo"
-                style={inputStyle}
-              />
-            </div>
-            <div style={{ width: 90 }}>
-              <label style={labelStyle}>ESTADO</label>
-              <select
-                value={estado}
-                onChange={e => setEstado(e.target.value)}
+          {/* FOTO DA GALERIA */}
+          <Field label="Foto de Perfil">
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <div
+                onClick={() => fileInputRef.current?.click()}
                 style={{
-                  ...inputStyle,
-                  padding: "12px 8px",
-                  appearance: "none",
-                  WebkitAppearance: "none",
+                  width: 90,
+                  height: 90,
+                  borderRadius: "50%",
+                  background: fotoPreview ? "transparent" : "rgba(255,255,255,0.06)",
+                  border: `2px dashed rgba(255,200,0,0.45)`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   cursor: "pointer",
+                  overflow: "hidden",
+                  flexShrink: 0,
                 }}
               >
-                <option value="">UF</option>
-                {ESTADOS_BR.map(uf => (
-                  <option key={uf} value={uf}>{uf}</option>
-                ))}
-              </select>
+                {fotoPreview ? (
+                  <img
+                    src={fotoPreview}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    alt="foto"
+                  />
+                ) : (
+                  <span style={{ fontSize: 34 }}>🖼️</span>
+                )}
+              </div>
+              <span style={{ color: G.muted, fontSize: 12 }}>
+                {fotoPreview ? "Toque para trocar" : "Escolher da galeria (opcional)"}
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFotoChange}
+              />
+            </div>
+          </Field>
+
+          {/* NOME */}
+          <Field label="Nome Completo">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: João Silva"
+              style={fieldStyle}
+              autoComplete="name"
+            />
+          </Field>
+
+          {/* TELEFONE */}
+          <Field label="Telefone (WhatsApp)">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
+              placeholder="(11) 99999-9999"
+              inputMode="tel"
+              style={fieldStyle}
+              autoComplete="tel"
+            />
+          </Field>
+
+          {/* CONFIRMAR TELEFONE */}
+          <Field label="Confirmar Telefone">
+            <input
+              value={phoneConfirm}
+              onChange={(e) => setPhoneConfirm(formatPhone(e.target.value))}
+              placeholder="(11) 99999-9999"
+              inputMode="tel"
+              style={{
+                ...fieldStyle,
+                borderColor: phoneMismatch
+                  ? "rgba(255,80,80,0.7)"
+                  : phoneMatch
+                  ? "rgba(80,255,100,0.7)"
+                  : G.border,
+              }}
+            />
+            {phoneMismatch && (
+              <span style={{ color: G.error, fontSize: 11, marginTop: 4 }}>
+                ✗ Os telefones não conferem
+              </span>
+            )}
+            {phoneMatch && (
+              <span style={{ color: G.success, fontSize: 11, marginTop: 4 }}>
+                ✓ Telefones conferem
+              </span>
+            )}
+          </Field>
+
+          {/* CIDADE + ESTADO */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <Field label="Cidade">
+                <input
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                  placeholder="Ex: Salvador"
+                  style={fieldStyle}
+                />
+              </Field>
+            </div>
+            <div style={{ width: 80 }}>
+              <Field label="Estado">
+                <select
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value)}
+                  style={{
+                    ...fieldStyle,
+                    padding: "13px 8px",
+                    cursor: "pointer",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    textAlign: "center",
+                  }}
+                >
+                  <option value="">UF</option>
+                  {ESTADOS_BR.map((uf) => (
+                    <option key={uf} value={uf}>
+                      {uf}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
           </div>
 
+          {/* CHECKBOXES */}
+          <div
+            style={{
+              background: "rgba(255,200,0,0.05)",
+              border: `1px solid rgba(255,200,0,0.2)`,
+              borderRadius: 12,
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={maisDe18}
+                onChange={(e) => setMaisDe18(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: G.gold, flexShrink: 0 }}
+              />
+              <span style={{ color: "#ccc", fontSize: 13, lineHeight: 1.4 }}>
+                Declaro que sou <strong style={{ color: G.gold }}>maior de 18 anos</strong>
+              </span>
+            </label>
+
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={aceitaTermos}
+                onChange={(e) => setAceitaTermos(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: G.gold, flexShrink: 0 }}
+              />
+              <span style={{ color: "#ccc", fontSize: 13, lineHeight: 1.4 }}>
+                Li e aceito os <strong style={{ color: G.gold }}>Termos de Uso</strong> e a{" "}
+                <strong style={{ color: G.gold }}>Política de Privacidade</strong>
+              </span>
+            </label>
+          </div>
+
+          {/* ERRO */}
           {error && (
-            <div style={{ color: "#ff6060", fontSize: 13, textAlign: "center", padding: "8px", background: "rgba(255,0,0,0.08)", borderRadius: 8 }}>
+            <div
+              style={{
+                color: G.error,
+                fontSize: 13,
+                textAlign: "center",
+                padding: "10px 14px",
+                background: "rgba(255,60,60,0.08)",
+                border: "1px solid rgba(255,60,60,0.2)",
+                borderRadius: 10,
+              }}
+            >
               {error}
             </div>
           )}
 
+          {/* BOTÃO CADASTRAR */}
           <button
             onClick={handleRegister}
             disabled={loading}
             style={{
-              background: loading ? "#444" : "linear-gradient(135deg, #FFD700, #FF8C00)",
-              color: "#000", border: "none", borderRadius: 12, padding: "16px",
-              fontSize: 16, fontWeight: 900, cursor: loading ? "default" : "pointer", marginTop: 4,
+              background: loading
+                ? "#333"
+                : `linear-gradient(135deg, ${G.gold}, ${G.orange})`,
+              color: loading ? "#666" : "#000",
+              border: "none",
+              borderRadius: 14,
+              padding: "17px",
+              fontSize: 16,
+              fontWeight: 900,
+              cursor: loading ? "default" : "pointer",
+              letterSpacing: 1,
+              marginTop: 4,
+              boxShadow: loading ? "none" : "0 4px 20px rgba(255,180,0,0.25)",
+              transition: "all 0.2s",
             }}
           >
-            {loading ? "AGUARDE..." : "CADASTRAR E JOGAR"}
+            {loading ? "AGUARDE..." : "CADASTRAR E JOGAR ⚽"}
           </button>
 
           <button
             onClick={() => { setMode("choice"); setError(""); }}
-            style={{ background: "transparent", color: "#888", border: "none", fontSize: 13, cursor: "pointer", padding: 8 }}
+            style={{
+              background: "transparent",
+              color: G.muted,
+              border: "none",
+              fontSize: 13,
+              cursor: "pointer",
+              padding: "8px",
+            }}
           >
             ← Voltar
           </button>
         </div>
       )}
 
+      {/* ── LOGIN ── */}
       {mode === "login" && (
-        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-          <div>
-            <label style={labelStyle}>SEU TELEFONE CADASTRADO</label>
-            <input
-              value={phone}
-              onChange={e => setPhone(formatPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              inputMode="tel"
-              style={inputStyle}
-            />
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 380,
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              color: G.gold,
+              fontWeight: 900,
+              fontSize: 17,
+              textAlign: "center",
+              letterSpacing: 1,
+              marginBottom: 4,
+            }}
+          >
+            ENTRAR NA CONTA
           </div>
 
+          <Field label="Seu Telefone Cadastrado">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
+              placeholder="(11) 99999-9999"
+              inputMode="tel"
+              style={fieldStyle}
+              autoComplete="tel"
+            />
+          </Field>
+
           {error && (
-            <div style={{ color: "#ff6060", fontSize: 13, textAlign: "center", padding: "8px", background: "rgba(255,0,0,0.08)", borderRadius: 8 }}>
+            <div
+              style={{
+                color: G.error,
+                fontSize: 13,
+                textAlign: "center",
+                padding: "10px 14px",
+                background: "rgba(255,60,60,0.08)",
+                border: "1px solid rgba(255,60,60,0.2)",
+                borderRadius: 10,
+              }}
+            >
               {error}
             </div>
           )}
@@ -347,17 +587,33 @@ export default function RegisterScreen({ referralCode, onRegistered }: Props) {
             onClick={handleLogin}
             disabled={loading}
             style={{
-              background: loading ? "#444" : "linear-gradient(135deg, #FFD700, #FF8C00)",
-              color: "#000", border: "none", borderRadius: 12, padding: "16px",
-              fontSize: 16, fontWeight: 900, cursor: loading ? "default" : "pointer", marginTop: 4,
+              background: loading
+                ? "#333"
+                : `linear-gradient(135deg, ${G.gold}, ${G.orange})`,
+              color: loading ? "#666" : "#000",
+              border: "none",
+              borderRadius: 14,
+              padding: "17px",
+              fontSize: 16,
+              fontWeight: 900,
+              cursor: loading ? "default" : "pointer",
+              letterSpacing: 1,
+              boxShadow: loading ? "none" : "0 4px 20px rgba(255,180,0,0.25)",
             }}
           >
-            {loading ? "AGUARDE..." : "ENTRAR"}
+            {loading ? "AGUARDE..." : "ENTRAR ⚽"}
           </button>
 
           <button
             onClick={() => { setMode("choice"); setError(""); }}
-            style={{ background: "transparent", color: "#888", border: "none", fontSize: 13, cursor: "pointer", padding: 8 }}
+            style={{
+              background: "transparent",
+              color: G.muted,
+              border: "none",
+              fontSize: 13,
+              cursor: "pointer",
+              padding: "8px",
+            }}
           >
             ← Voltar
           </button>
