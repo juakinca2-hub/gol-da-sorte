@@ -1028,6 +1028,21 @@ export default function App() {
       {/* ── PAINEL ADMIN ── */}
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
 
+      {/* ── BOTÃO ADMIN VISÍVEL ── */}
+      {ReactDOM.createPortal(
+        <button
+          onClick={() => setShowAdmin(true)}
+          style={{
+            position: "fixed", bottom: 16, right: 16, zIndex: 999999,
+            background: "#1a1a1a", border: "2px solid gold",
+            borderRadius: 10, color: "gold", fontSize: 14, fontWeight: "bold",
+            padding: "8px 14px", cursor: "pointer",
+            boxShadow: "0 0 12px rgba(255,215,0,0.4)",
+          }}
+        >⚙️ ADMIN</button>,
+        document.body
+      )}
+
       <style>{`
         @keyframes bonusPop {
           0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; }
