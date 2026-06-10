@@ -557,7 +557,20 @@ export default function App() {
 
   if (!userLoaded) return null;
   if (!userId) {
-    return <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />;
+    return (
+      <div style={{ position: "relative" }}>
+        <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />
+        <button
+          onClick={() => setShowAdmin(true)}
+          style={{
+            position: "fixed", bottom: 12, right: 12, zIndex: 999,
+            background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,215,0,0.3)",
+            borderRadius: 8, color: "rgba(255,215,0,0.5)", fontSize: 11,
+            padding: "4px 8px", cursor: "pointer",
+          }}
+        >⚙️ Admin</button>
+      </div>
+    );
   }
 
   // Derived font size based on image render width
