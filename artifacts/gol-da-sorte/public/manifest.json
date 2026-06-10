@@ -23,6 +23,15 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Painel Admin",
+      "short_name": "Admin",
+      "description": "Acessar o painel de administração",
+      "url": "/?admin=1",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "screenshots": [],
   "categories": ["games", "entertainment"]
 }
