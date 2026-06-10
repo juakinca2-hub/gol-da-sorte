@@ -553,6 +553,8 @@ export default function App() {
     showToast(`✅ Compra realizada! ${newPlays} jogadas disponíveis.`);
   };
 
+  if (showAdmin) return <AdminPanel onClose={() => { setShowAdmin(false); window.history.replaceState({}, "", window.location.pathname); }} />;
+
   if (!userLoaded) return null;
   if (!userId) {
     return <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />;
