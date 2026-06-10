@@ -61,13 +61,6 @@ router.post("/register", async (req, res) => {
   }
 
   const clientIp = getClientIp(req);
-  if (clientIp !== "unknown") {
-    const existingIp = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.ipAddress, clientIp));
-    if (existingIp.length > 0) {
-      res.status(409).json({ error: "Já existe um cadastro neste aparelho. Use 'Já tenho conta'." });
-      return;
-    }
-  }
 
   let referredById: number | null = null;
   if (referralCode) {
