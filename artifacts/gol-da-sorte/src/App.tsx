@@ -688,84 +688,90 @@ export default function App() {
       </div>
 
       {/* ══════════════════════════════════════════════
-          ÚLTIMO GANHADOR — tarja preta 3×3cm + dados dinâmicos
-          Avatar: xF≈0.555-0.670, yF≈0.377-0.439 (≈3×3cm)
-          Texto: xF≈0.680-0.975, yF≈0.377-0.439
+          ÚLTIMO GANHADOR — só renderiza quando há dados
+          Cobre o conteúdo estático da imagem e exibe dados dinâmicos
+          xF≈0.555-0.975, yF≈0.372-0.408
           ══════════════════════════════════════════════ */}
-      {/* Tarja preta cobrindo avatar estático */}
-      <div
-        style={{
-          ...ov(0.555, 0.377, 0.115, 0.062),
-          zIndex: 30,
-          pointerEvents: "none",
-          background: "#000",
-          borderRadius: 4,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {ultimoGanhador?.foto ? (
-          <img
-            src={ultimoGanhador.foto}
-            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-          />
-        ) : (
-          <span style={{ fontSize: Math.max(bounds.w * 0.040, 14) }}>👤</span>
-        )}
-      </div>
+      {ultimoGanhador?.nome && (
+        <div
+          style={{
+            ...ov(0.553, 0.372, 0.422, 0.038),
+            zIndex: 30,
+            pointerEvents: "none",
+            background: "#0a0a0a",
+            borderRadius: 6,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: bounds.w * 0.012,
+            paddingLeft: bounds.w * 0.008,
+            paddingRight: bounds.w * 0.008,
+            overflow: "hidden",
+          }}
+        >
+          {/* Avatar */}
+          <div style={{
+            flexShrink: 0,
+            width: bounds.h * 0.034,
+            height: bounds.h * 0.034,
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "#222",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1.5px solid rgba(255,215,0,0.3)",
+          }}>
+            {ultimoGanhador.foto ? (
+              <img
+                src={ultimoGanhador.foto}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <span style={{ fontSize: Math.max(bounds.w * 0.030, 11) }}>👤</span>
+            )}
+          </div>
 
-      {/* Tarja preta cobrindo nome/cidade/valor estáticos */}
-      <div
-        style={{
-          ...ov(0.678, 0.377, 0.297, 0.062),
-          zIndex: 30,
-          pointerEvents: "none",
-          background: "#000",
-          borderRadius: 4,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          paddingLeft: bounds.w * 0.012,
-          gap: 1,
-        }}
-      >
-        {ultimoGanhador?.nome ? (
-          <>
+          {/* Texto */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            gap: 0,
+            minWidth: 0,
+          }}>
             <span style={{
               color: "#fff",
               fontWeight: 700,
-              fontSize: Math.max(bounds.w * 0.028, 10),
+              fontSize: Math.max(bounds.w * 0.026, 9),
               lineHeight: 1.2,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              maxWidth: "100%",
+              maxWidth: bounds.w * 0.26,
             }}>
               {ultimoGanhador.nome}
             </span>
             <span style={{
               color: "#aaa",
-              fontSize: Math.max(bounds.w * 0.022, 8),
+              fontSize: Math.max(bounds.w * 0.020, 7),
               lineHeight: 1.2,
+              whiteSpace: "nowrap",
             }}>
               {ultimoGanhador.cidadeEstado}
             </span>
             <span style={{
               color: "#FFD700",
               fontWeight: 700,
-              fontSize: Math.max(bounds.w * 0.026, 9),
+              fontSize: Math.max(bounds.w * 0.024, 8),
               lineHeight: 1.2,
             }}>
               R$ {ultimoGanhador.valor}
             </span>
-          </>
-        ) : (
-          <span style={{ color: "#555", fontSize: Math.max(bounds.w * 0.022, 8) }}>—</span>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════
           CONVIDAR AGORA button overlay
