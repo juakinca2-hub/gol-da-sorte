@@ -677,32 +677,32 @@ export default function App() {
       {ultimoGanhador?.nome && (
         <div
           style={{
-            ...ov(0.553, 0.372, 0.422, 0.038),
+            ...ov(0.553, 0.393, 0.420, 0.062),
             zIndex: 30,
             pointerEvents: "none",
             background: "#0a0a0a",
-            borderRadius: 6,
+            borderRadius: 5,
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            gap: bounds.w * 0.012,
-            paddingLeft: bounds.w * 0.008,
-            paddingRight: bounds.w * 0.008,
+            gap: bounds.w * 0.014,
+            paddingLeft: bounds.w * 0.010,
+            paddingRight: bounds.w * 0.010,
             overflow: "hidden",
           }}
         >
           {/* Avatar */}
           <div style={{
             flexShrink: 0,
-            width: bounds.h * 0.034,
-            height: bounds.h * 0.034,
+            width: bounds.h * 0.054,
+            height: bounds.h * 0.054,
             borderRadius: "50%",
             overflow: "hidden",
             background: "#222",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: "1.5px solid rgba(255,215,0,0.3)",
+            border: "1.5px solid rgba(255,215,0,0.35)",
           }}>
             {ultimoGanhador.foto ? (
               <img
@@ -710,7 +710,7 @@ export default function App() {
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <span style={{ fontSize: Math.max(bounds.w * 0.030, 11) }}>👤</span>
+              <span style={{ fontSize: Math.max(bounds.w * 0.038, 14) }}>👤</span>
             )}
           </div>
 
@@ -720,24 +720,24 @@ export default function App() {
             flexDirection: "column",
             alignItems: "flex-start",
             justifyContent: "center",
-            gap: 0,
+            gap: 1,
             minWidth: 0,
           }}>
             <span style={{
               color: "#fff",
               fontWeight: 700,
-              fontSize: Math.max(bounds.w * 0.026, 9),
+              fontSize: Math.max(bounds.w * 0.030, 11),
               lineHeight: 1.2,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              maxWidth: bounds.w * 0.26,
+              maxWidth: bounds.w * 0.28,
             }}>
               {ultimoGanhador.nome}
             </span>
             <span style={{
-              color: "#aaa",
-              fontSize: Math.max(bounds.w * 0.020, 7),
+              color: "#bbb",
+              fontSize: Math.max(bounds.w * 0.024, 9),
               lineHeight: 1.2,
               whiteSpace: "nowrap",
             }}>
@@ -746,7 +746,7 @@ export default function App() {
             <span style={{
               color: "#FFD700",
               fontWeight: 700,
-              fontSize: Math.max(bounds.w * 0.024, 8),
+              fontSize: Math.max(bounds.w * 0.028, 10),
               lineHeight: 1.2,
             }}>
               R$ {ultimoGanhador.valor}
