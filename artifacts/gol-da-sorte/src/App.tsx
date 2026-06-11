@@ -677,7 +677,7 @@ export default function App() {
       {ultimoGanhador?.nome && (
         <div
           style={{
-            ...ov(0.598, 0.393, 0.375, 0.124),
+            ...ov(0.608, 0.393, 0.355, 0.124),
             zIndex: 30,
             pointerEvents: "none",
             background: "#0a0a0a",
