@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import ReactDOM from "react-dom";
 import golDaSorteImg from "@assets/IMG_7715_1780523556282.jpeg";
 import RegisterScreen from "./components/RegisterScreen";
 import PurchaseModal from "./components/PurchaseModal";
@@ -562,18 +561,20 @@ export default function App() {
     return (
       <>
         <RegisterScreen referralCode={referralCodeFromUrl || undefined} onRegistered={handleRegistered} />
-        {ReactDOM.createPortal(
-          <button
-            onClick={() => setShowAdmin(true)}
-            style={{
-              position: "fixed", bottom: 16, right: 16, zIndex: 999999,
-              background: "#1a1a1a", border: "2px solid gold",
-              borderRadius: 10, color: "gold", fontSize: 14, fontWeight: "bold",
-              padding: "8px 14px", cursor: "pointer", boxShadow: "0 0 12px rgba(255,215,0,0.4)",
-            }}
-          >⚙️ ADMIN</button>,
-          document.body
-        )}
+        {/* Gatilho secreto: 3 toques rápidos no canto inferior esquerdo */}
+        <div
+          onClick={() => {
+            adminTapCount.current += 1;
+            if (adminTapTimer.current) clearTimeout(adminTapTimer.current);
+            if (adminTapCount.current >= 3) {
+              adminTapCount.current = 0;
+              setShowAdmin(true);
+            } else {
+              adminTapTimer.current = setTimeout(() => { adminTapCount.current = 0; }, 1200);
+            }
+          }}
+          style={{ position: "fixed", bottom: 0, left: 0, width: 60, height: 60, zIndex: 500, cursor: "default" }}
+        />
       </>
     );
   }
@@ -1017,20 +1018,6 @@ export default function App() {
       {/* ── PAINEL ADMIN ── */}
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
 
-      {/* ── BOTÃO ADMIN VISÍVEL ── */}
-      {ReactDOM.createPortal(
-        <button
-          onClick={() => setShowAdmin(true)}
-          style={{
-            position: "fixed", bottom: 16, right: 16, zIndex: 999999,
-            background: "#1a1a1a", border: "2px solid gold",
-            borderRadius: 10, color: "gold", fontSize: 14, fontWeight: "bold",
-            padding: "8px 14px", cursor: "pointer",
-            boxShadow: "0 0 12px rgba(255,215,0,0.4)",
-          }}
-        >⚙️ ADMIN</button>,
-        document.body
-      )}
 
       <style>{`
         @keyframes bonusPop {
