@@ -501,6 +501,7 @@ export default function App() {
       setTimeout(() => {
         setErrorBall(null); setJustOkBall(null);
         setCorrectPicks([]); setCurrentRow(0);
+        setGameActive(false);
         setWrongBalls(randomWrongBalls()); setLocked(false);
       }, 1600);
     } else {
