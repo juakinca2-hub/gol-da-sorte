@@ -606,10 +606,11 @@ export default function App() {
         muted
         playsInline
         style={{
-          ...ov(0.516, 0.009, 0.453, 0.127),
+          ...ov(0.530, 0.038, 0.400, 0.095),
           zIndex: 20,
           objectFit: "cover",
           borderRadius: 6,
+          overflow: "hidden",
         }}
       />
 
