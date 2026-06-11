@@ -694,8 +694,8 @@ export default function App() {
           {/* Avatar */}
           <div style={{
             flexShrink: 0,
-            width: bounds.h * 0.100,
-            height: bounds.h * 0.100,
+            width: bounds.h * 0.068,
+            height: bounds.h * 0.068,
             borderRadius: "50%",
             overflow: "hidden",
             background: "#222",
