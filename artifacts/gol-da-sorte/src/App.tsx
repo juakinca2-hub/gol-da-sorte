@@ -677,7 +677,7 @@ export default function App() {
       {ultimoGanhador?.nome && (
         <div
           style={{
-            ...ov(0.553, 0.393, 0.420, 0.062),
+            ...ov(0.553, 0.393, 0.420, 0.124),
             zIndex: 30,
             pointerEvents: "none",
             background: "#0a0a0a",
@@ -694,8 +694,8 @@ export default function App() {
           {/* Avatar */}
           <div style={{
             flexShrink: 0,
-            width: bounds.h * 0.054,
-            height: bounds.h * 0.054,
+            width: bounds.h * 0.100,
+            height: bounds.h * 0.100,
             borderRadius: "50%",
             overflow: "hidden",
             background: "#222",
