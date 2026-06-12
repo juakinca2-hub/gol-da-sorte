@@ -27,17 +27,20 @@ type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
 interface WinnerCard { nome: string; cidadeEstado: string; valor: string; foto: string; }
 
-function WinnerCell({ w }: { w: WinnerCard }) {
+function WinnerCell({ w, onClick }: { w: WinnerCard; onClick: () => void }) {
+  const firstName = (w.nome || "").split(" ")[0] || "—";
   return (
-    <div style={{ width: "50%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "3px 3px", gap: 1.5, boxSizing: "border-box" }}>
-      <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,215,0,0.5)", flexShrink: 0, background: "#1a1a30", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div
+      onClick={onClick}
+      style={{ width: "50%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4px 2px", gap: 2, boxSizing: "border-box", cursor: "pointer" }}
+    >
+      <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,215,0,0.7)", flexShrink: 0, background: "#1a1a30", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {w.foto
           ? <img src={w.foto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <span style={{ fontSize: 10, lineHeight: 1 }}>👤</span>}
+          : <span style={{ fontSize: 13, lineHeight: 1 }}>👤</span>}
       </div>
-      <span style={{ color: "#fff", fontSize: 6.5, fontWeight: 700, lineHeight: 1.2, textAlign: "center", width: "100%", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{w.nome || "—"}</span>
-      <span style={{ color: "#aaa", fontSize: 5.5, lineHeight: 1, textAlign: "center", width: "100%", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{w.cidadeEstado || ""}</span>
-      <span style={{ color: "#FFD700", fontSize: 7, fontWeight: 900, lineHeight: 1, textAlign: "center" }}>R$ {w.valor || "—"}</span>
+      <span style={{ color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: 1.1, textAlign: "center", width: "100%", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{firstName}</span>
+      <span style={{ color: "#FFD700", fontSize: 8, fontWeight: 700, lineHeight: 1, textAlign: "center" }}>R${w.valor || "—"}</span>
     </div>
   );
 }
@@ -348,6 +351,7 @@ export default function App() {
   const prevPlaysRef = useRef<number | null>(null);
   const emptyWinner: WinnerCard = { nome: "", cidadeEstado: "", valor: "", foto: "" };
   const [ganhadores, setGanhadores] = useState<WinnerCard[]>([emptyWinner, emptyWinner, emptyWinner, emptyWinner]);
+  const [selectedWinner, setSelectedWinner] = useState<WinnerCard | null>(null);
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
@@ -1042,11 +1046,11 @@ export default function App() {
         position: "fixed", bottom: 114, left: "calc(50% + 44px)",
         zIndex: 89, width: 108, height: 60,
         background: "#000", borderRadius: 14,
-        pointerEvents: "none", display: "flex", overflow: "hidden",
+        display: "flex", overflow: "hidden",
       }}>
-        <WinnerCell w={ganhadores[0]} />
+        <WinnerCell w={ganhadores[0]} onClick={() => setSelectedWinner(ganhadores[0])} />
         <div style={{ width: 1, background: "#2a2a2a", flexShrink: 0, margin: "6px 0" }} />
-        <WinnerCell w={ganhadores[1]} />
+        <WinnerCell w={ganhadores[1]} onClick={() => setSelectedWinner(ganhadores[1])} />
       </div>
 
       {/* ── TARJA GANHADORES 2 (baixo) — ganhadores[2] e [3] ── */}
@@ -1054,12 +1058,52 @@ export default function App() {
         position: "fixed", bottom: 50, left: "calc(50% + 44px)",
         zIndex: 89, width: 108, height: 60,
         background: "#000", borderRadius: 14,
-        pointerEvents: "none", display: "flex", overflow: "hidden",
+        display: "flex", overflow: "hidden",
       }}>
-        <WinnerCell w={ganhadores[2]} />
+        <WinnerCell w={ganhadores[2]} onClick={() => setSelectedWinner(ganhadores[2])} />
         <div style={{ width: 1, background: "#2a2a2a", flexShrink: 0, margin: "6px 0" }} />
-        <WinnerCell w={ganhadores[3]} />
+        <WinnerCell w={ganhadores[3]} onClick={() => setSelectedWinner(ganhadores[3])} />
       </div>
+
+      {/* ── POPUP GANHADOR ── */}
+      {selectedWinner && (
+        <div
+          onClick={() => setSelectedWinner(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", paddingBottom: 180, paddingRight: 16 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(160deg, #0d0d0d, #1a1200)",
+              border: "2px solid #FFD700",
+              borderRadius: 16,
+              padding: "14px 16px",
+              width: 200,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              boxShadow: "0 0 30px rgba(255,200,0,0.25)",
+              position: "relative",
+            }}
+          >
+            <button onClick={() => setSelectedWinner(null)} style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: "#aaa", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>✕</button>
+            <div style={{ fontSize: 11, color: "#FFD700", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>🏆 Ganhador</div>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2.5px solid #FFD700", background: "#1a1a30", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {selectedWinner.foto
+                ? <img src={selectedWinner.foto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <span style={{ fontSize: 28 }}>👤</span>}
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ color: "#fff", fontWeight: 800, fontSize: 14, lineHeight: 1.3 }}>{selectedWinner.nome || "—"}</div>
+              <div style={{ color: "#aaa", fontSize: 12, marginTop: 2 }}>{selectedWinner.cidadeEstado || ""}</div>
+            </div>
+            <div style={{ color: "#FFD700", fontWeight: 900, fontSize: 18, textShadow: "0 0 12px rgba(255,200,0,0.5)" }}>
+              R$ {selectedWinner.valor || "—"}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
       {showPromoModal && (
