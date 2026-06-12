@@ -658,8 +658,8 @@ export default function App() {
         onTouchEnd={(e) => { e.preventDefault(); setShowPurchaseModal(true); }}
         style={{
           ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w + UI.jogadasPlus.w, UI.jogadasNum.h),
-          left: `calc(${bounds.x + bounds.w * UI.jogadasNum.x}px - 2mm)`,
-          width: `calc(${bounds.w * (UI.jogadasNum.w + UI.jogadasPlus.w)}px + 7mm)`,
+          left: `calc(${bounds.x + bounds.w * UI.jogadasNum.x}px - 4mm)`,
+          width: `calc(${bounds.w * (UI.jogadasNum.w + UI.jogadasPlus.w)}px + 9mm)`,
           zIndex: 30,
           cursor: "pointer",
           background: playsRemaining <= 0
