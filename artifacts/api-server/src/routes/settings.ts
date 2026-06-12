@@ -84,4 +84,34 @@ router.get("/broadcast", async (_req, res) => {
   }
 });
 
+// ── Promoção (public) ─────────────────────────────────────────────────────────
+
+router.get("/promocao", async (_req, res) => {
+  try {
+    const keys = [
+      "promo_ativa",
+      "promo_titulo",
+      "promo_meta1_indicacoes",
+      "promo_meta1_jogadas",
+      "promo_meta2_indicacoes",
+      "promo_meta2_dias",
+      "promo_meta2_jogadas",
+      "promo_bonus_por_indicacao",
+    ];
+    const rows = await Promise.all(keys.map(k => getSetting(k, "")));
+    res.json({
+      ativa: rows[0] !== "false",
+      titulo: rows[1] || "GANHE 100 JOGADAS GRÁTIS",
+      meta1Indicacoes: rows[2] || "20",
+      meta1Jogadas: rows[3] || "50",
+      meta2Indicacoes: rows[4] || "30",
+      meta2Dias: rows[5] || "30",
+      meta2Jogadas: rows[6] || "100",
+      bonusPorIndicacao: rows[7] || "3",
+    });
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar promoção" });
+  }
+});
+
 export default router;

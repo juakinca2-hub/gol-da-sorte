@@ -348,6 +348,16 @@ export default function App() {
   const [broadcastModal, setBroadcastModal] = useState<string | null>(null);
   const [megaActive, setMegaActive] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoConfig, setPromoConfig] = useState({
+    ativa: true,
+    titulo: "GANHE 100 JOGADAS GRÁTIS",
+    meta1Indicacoes: "20",
+    meta1Jogadas: "50",
+    meta2Indicacoes: "30",
+    meta2Dias: "30",
+    meta2Jogadas: "100",
+    bonusPorIndicacao: "3",
+  });
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
   // Só mostra o botão Admin para quem acessou com ?admin=1 na URL
@@ -414,7 +424,8 @@ export default function App() {
       apiCall("/settings/valor-acumulado"),
       apiCall("/settings/ultimo-ganhador"),
       apiCall("/settings/broadcast"),
-    ]).then(([valorData, ugData, broadcastData]) => {
+      apiCall("/settings/promocao"),
+    ]).then(([valorData, ugData, broadcastData, promoData]) => {
       if (valorData?.valor) {
         const num = parseFloat(valorData.valor.replace(",", "."));
         if (!isNaN(num)) {
@@ -434,6 +445,18 @@ export default function App() {
         if (seen !== broadcastData.broadcastId) {
           setBroadcastModal(broadcastData.message);
         }
+      }
+      if (promoData) {
+        setPromoConfig({
+          ativa: promoData.ativa !== false,
+          titulo: promoData.titulo || "GANHE 100 JOGADAS GRÁTIS",
+          meta1Indicacoes: promoData.meta1Indicacoes || "20",
+          meta1Jogadas: promoData.meta1Jogadas || "50",
+          meta2Indicacoes: promoData.meta2Indicacoes || "30",
+          meta2Dias: promoData.meta2Dias || "30",
+          meta2Jogadas: promoData.meta2Jogadas || "100",
+          bonusPorIndicacao: promoData.bonusPorIndicacao || "3",
+        });
       }
     });
   }, []);
@@ -927,6 +950,7 @@ export default function App() {
         <InviteScreen userId={userId} onClose={() => { setShowInviteScreen(false); refreshReferralCount(userId); }} />
       )}
       {/* ── BOTÃO PROMOÇÃO 100 JOGADAS ── */}
+      {promoConfig.ativa && (
       <div
         onClick={() => setShowPromoModal(true)}
         onTouchEnd={(e) => { e.preventDefault(); setShowPromoModal(true); }}
@@ -963,9 +987,10 @@ export default function App() {
           textAlign: "center",
           lineHeight: 1.25,
         }}>
-          GANHE{"\n"}100 JOGADAS{"\n"}GRÁTIS
+          {promoConfig.titulo}
         </span>
       </div>
+      )}
 
       {/* ── TARJA PRETA 1 — abaixo do botão promoção ── */}
       <div
@@ -1046,7 +1071,7 @@ export default function App() {
               textTransform: "uppercase",
               lineHeight: 1.2,
             }}>
-              GANHE 100<br />JOGADAS GRÁTIS!
+              {promoConfig.titulo}!
             </div>
 
             {/* Cards das etapas */}
@@ -1062,15 +1087,15 @@ export default function App() {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 22 }}>🥈</span>
-                  <span style={{ color: "#7FFF00", fontWeight: 900, fontSize: 16 }}>20 INDICAÇÕES</span>
+                  <span style={{ color: "#7FFF00", fontWeight: 900, fontSize: 16 }}>{promoConfig.meta1Indicacoes} INDICAÇÕES</span>
                 </div>
                 <div style={{ color: "#d4f7d4", fontSize: 13, lineHeight: 1.5 }}>
-                  Indique <strong style={{ color: "#7FFF00" }}>20 pessoas válidas</strong> e ganhe<br />
-                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+50 JOGADAS GRÁTIS</strong> na hora!
+                  Indique <strong style={{ color: "#7FFF00" }}>{promoConfig.meta1Indicacoes} pessoas válidas</strong> e ganhe<br />
+                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+{promoConfig.meta1Jogadas} JOGADAS GRÁTIS</strong> na hora!
                 </div>
               </div>
 
-              {/* Etapa 2 – 30 indicações */}
+              {/* Etapa 2 */}
               <div style={{
                 background: "linear-gradient(135deg, rgba(255,140,0,0.15), rgba(180,60,0,0.25))",
                 border: "1.5px solid rgba(255,180,0,0.6)",
@@ -1080,11 +1105,11 @@ export default function App() {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 22 }}>🥇</span>
-                  <span style={{ color: "#FFD700", fontWeight: 900, fontSize: 16 }}>30 INDICAÇÕES EM 30 DIAS</span>
+                  <span style={{ color: "#FFD700", fontWeight: 900, fontSize: 16 }}>{promoConfig.meta2Indicacoes} INDICAÇÕES EM {promoConfig.meta2Dias} DIAS</span>
                 </div>
                 <div style={{ color: "#fff0cc", fontSize: 13, lineHeight: 1.5 }}>
-                  Indique <strong style={{ color: "#FFD700" }}>30 pessoas válidas</strong> em até 30 dias e ganhe<br />
-                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+100 JOGADAS GRÁTIS!</strong>
+                  Indique <strong style={{ color: "#FFD700" }}>{promoConfig.meta2Indicacoes} pessoas válidas</strong> em até {promoConfig.meta2Dias} dias e ganhe<br />
+                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+{promoConfig.meta2Jogadas} JOGADAS GRÁTIS!</strong>
                 </div>
               </div>
 
@@ -1102,7 +1127,7 @@ export default function App() {
                 </div>
                 <div style={{ color: "#e8d4ff", fontSize: 13, lineHeight: 1.5 }}>
                   Além disso, você continua ganhando<br />
-                  <strong style={{ color: "#cc88ff", fontSize: 15 }}>+3 JOGADAS</strong> por cada indicação válida!
+                  <strong style={{ color: "#cc88ff", fontSize: 15 }}>+{promoConfig.bonusPorIndicacao} JOGADAS</strong> por cada indicação válida!
                 </div>
               </div>
             </div>

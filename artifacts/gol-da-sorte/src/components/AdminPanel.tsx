@@ -79,6 +79,14 @@ interface GameSettings {
   ug_cidade_estado: string;
   ug_valor: string;
   ug_foto: string;
+  promo_ativa: string;
+  promo_titulo: string;
+  promo_meta1_indicacoes: string;
+  promo_meta1_jogadas: string;
+  promo_meta2_indicacoes: string;
+  promo_meta2_dias: string;
+  promo_meta2_jogadas: string;
+  promo_bonus_por_indicacao: string;
 }
 
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
@@ -597,6 +605,66 @@ export default function AdminPanel({ onClose, skipAuth }: { onClose: () => void;
               <div style={{ color: "#25D366", fontWeight: 700, marginBottom: 10, fontSize: 13 }}>💬 Canal de Atendimento</div>
               <Input label="WhatsApp (Ex: 5511999999999)" value={settings.whatsapp_atendimento || ""} onChange={v => setSettings(s => ({ ...s, whatsapp_atendimento: v }))} />
               <Btn label="Salvar" color="#25D366" onClick={() => saveSettings({ whatsapp_atendimento: settings.whatsapp_atendimento || "" })} />
+            </Card>
+
+            {/* Promoção */}
+            <Card style={{ marginBottom: 12 }}>
+              <div style={{ color: "#ff6a00", fontWeight: 700, marginBottom: 10, fontSize: 13 }}>🎁 Promoção — Botão no Jogo</div>
+
+              {/* Ativar/Desativar */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <span style={{ color: C.text, fontSize: 13 }}>Botão Promoção Ativo</span>
+                <button
+                  onClick={() => {
+                    const novo = settings.promo_ativa === "false" ? "true" : "false";
+                    setSettings(s => ({ ...s, promo_ativa: novo }));
+                    saveSettings({ promo_ativa: novo });
+                  }}
+                  style={{
+                    background: settings.promo_ativa === "false" ? C.red : "#ff6a00",
+                    border: "none", borderRadius: 20, padding: "6px 16px",
+                    color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer",
+                  }}>
+                  {settings.promo_ativa === "false" ? "INATIVO" : "ATIVO"}
+                </button>
+              </div>
+
+              <Input
+                label="Título do botão (ex: GANHE 100 JOGADAS GRÁTIS)"
+                value={settings.promo_titulo || "GANHE 100 JOGADAS GRÁTIS"}
+                onChange={v => setSettings(s => ({ ...s, promo_titulo: v }))}
+              />
+
+              <div style={{ color: C.muted, fontSize: 11, margin: "8px 0 6px", fontWeight: 700 }}>🥈 META 1 — Recompensa intermediária</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <Input label="Indicações necessárias" value={settings.promo_meta1_indicacoes || "20"} onChange={v => setSettings(s => ({ ...s, promo_meta1_indicacoes: v }))} />
+                <Input label="Jogadas ganhas" value={settings.promo_meta1_jogadas || "50"} onChange={v => setSettings(s => ({ ...s, promo_meta1_jogadas: v }))} />
+              </div>
+
+              <div style={{ color: C.muted, fontSize: 11, margin: "8px 0 6px", fontWeight: 700 }}>🥇 META 2 — Recompensa principal</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                <Input label="Indicações" value={settings.promo_meta2_indicacoes || "30"} onChange={v => setSettings(s => ({ ...s, promo_meta2_indicacoes: v }))} />
+                <Input label="Dias limite" value={settings.promo_meta2_dias || "30"} onChange={v => setSettings(s => ({ ...s, promo_meta2_dias: v }))} />
+                <Input label="Jogadas ganhas" value={settings.promo_meta2_jogadas || "100"} onChange={v => setSettings(s => ({ ...s, promo_meta2_jogadas: v }))} />
+              </div>
+
+              <div style={{ color: C.muted, fontSize: 11, margin: "8px 0 6px", fontWeight: 700 }}>⭐ BÔNUS CONTÍNUO por indicação</div>
+              <Input label="Jogadas por indicação válida" value={settings.promo_bonus_por_indicacao || "3"} onChange={v => setSettings(s => ({ ...s, promo_bonus_por_indicacao: v }))} />
+
+              <Btn
+                label="💾 Salvar Promoção"
+                color="#ff6a00"
+                onClick={() => saveSettings({
+                  promo_ativa: settings.promo_ativa ?? "true",
+                  promo_titulo: settings.promo_titulo || "GANHE 100 JOGADAS GRÁTIS",
+                  promo_meta1_indicacoes: settings.promo_meta1_indicacoes || "20",
+                  promo_meta1_jogadas: settings.promo_meta1_jogadas || "50",
+                  promo_meta2_indicacoes: settings.promo_meta2_indicacoes || "30",
+                  promo_meta2_dias: settings.promo_meta2_dias || "30",
+                  promo_meta2_jogadas: settings.promo_meta2_jogadas || "100",
+                  promo_bonus_por_indicacao: settings.promo_bonus_por_indicacao || "3",
+                })}
+              />
             </Card>
           </div>
         )}
