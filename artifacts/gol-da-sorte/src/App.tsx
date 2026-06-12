@@ -327,6 +327,8 @@ export default function App() {
     return stored ? parseInt(stored) : null;
   });
   const [playsRemaining, setPlaysRemaining] = useState<number>(0);
+  const [jogadasPop, setJogadasPop] = useState(false);
+  const prevPlaysRef = useRef<number | null>(null);
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
@@ -460,6 +462,15 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (prevPlaysRef.current !== null && prevPlaysRef.current !== playsRemaining) {
+      setJogadasPop(true);
+      const t = setTimeout(() => setJogadasPop(false), 400);
+      return () => clearTimeout(t);
+    }
+    prevPlaysRef.current = playsRemaining;
+  }, [playsRemaining]);
 
   useEffect(() => {
     if (!userId) { setUserLoaded(true); return; }
@@ -661,6 +672,7 @@ export default function App() {
           left: `calc(${bounds.x + bounds.w * UI.jogadasNum.x}px - 4mm)`,
           width: `calc(${bounds.w * (UI.jogadasNum.w + UI.jogadasPlus.w)}px + 9mm)`,
           top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 2mm)`,
+          animation: jogadasPop ? "jogadasPop 0.38s cubic-bezier(0.36,0.07,0.19,0.97)" : "none",
           zIndex: 30,
           cursor: "pointer",
           background: playsRemaining <= 0
@@ -1362,6 +1374,12 @@ export default function App() {
           60%  { transform: scale(1.06) rotate(2deg); opacity: 1; }
           80%  { transform: scale(0.97) rotate(-1deg); }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes jogadasPop {
+          0%   { transform: scale(1); }
+          30%  { transform: scale(1.18); }
+          60%  { transform: scale(0.95); }
+          100% { transform: scale(1); }
         }
         @keyframes promoPulse {
           0%   { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: scale(1); }
