@@ -933,10 +933,10 @@ export default function App() {
         style={{
           position: "fixed",
           bottom: 90,
-          left: "calc(50% + 69px)",
+          left: "calc(50% - 7px)",
           zIndex: 90,
           cursor: "pointer",
-          width: 88,
+          width: 164,
           height: 88,
           background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
           border: "2.5px solid #FFD700",
