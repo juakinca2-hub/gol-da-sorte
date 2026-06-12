@@ -936,7 +936,7 @@ export default function App() {
           left: "calc(50% + 44px)",
           zIndex: 90,
           cursor: "pointer",
-          width: 100,
+          width: 108,
           height: 60,
           background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
           border: "2.5px solid #FFD700",
