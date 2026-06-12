@@ -660,6 +660,7 @@ export default function App() {
           ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w + UI.jogadasPlus.w, UI.jogadasNum.h),
           left: `calc(${bounds.x + bounds.w * UI.jogadasNum.x}px - 4mm)`,
           width: `calc(${bounds.w * (UI.jogadasNum.w + UI.jogadasPlus.w)}px + 9mm)`,
+          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 2mm)`,
           zIndex: 30,
           cursor: "pointer",
           background: playsRemaining <= 0
