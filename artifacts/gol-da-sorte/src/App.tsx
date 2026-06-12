@@ -933,7 +933,7 @@ export default function App() {
         style={{
           position: "fixed",
           bottom: 90,
-          right: 12,
+          left: "calc(50% - 44px)",
           zIndex: 90,
           cursor: "pointer",
           width: 88,
