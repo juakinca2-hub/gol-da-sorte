@@ -933,38 +933,39 @@ export default function App() {
         style={{
           position: "fixed",
           bottom: 90,
-          left: "calc(50% + 69px)",
+          right: 12,
           zIndex: 90,
           cursor: "pointer",
-          width: 88,
+          width: 200,
           height: 88,
           background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
           border: "2.5px solid #FFD700",
           borderRadius: 14,
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          gap: 3,
+          gap: 8,
           boxShadow: "0 0 20px 6px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5)",
           animation: "promoPulse 1.6s ease-in-out infinite",
           userSelect: "none",
-          padding: 6,
+          padding: "6px 12px",
         }}
       >
-        <span style={{ fontSize: 24, lineHeight: 1 }}>🎁</span>
+        <span style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>🎁</span>
         <span style={{
           color: "#FFD700",
           fontWeight: 900,
-          fontSize: 10,
-          letterSpacing: 0.3,
+          fontSize: 12,
+          letterSpacing: 0.4,
           textShadow: "0 0 8px rgba(255,215,0,0.8), 0 1px 3px rgba(0,0,0,0.9)",
           textTransform: "uppercase",
           textAlign: "center",
-          lineHeight: 1.25,
+          lineHeight: 1.35,
         }}>
           GANHE{"\n"}100 JOGADAS{"\n"}GRÁTIS
         </span>
+        <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>🏆</span>
       </div>
 
       {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
