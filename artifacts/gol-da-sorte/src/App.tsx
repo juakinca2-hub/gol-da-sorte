@@ -967,11 +967,26 @@ export default function App() {
         </span>
       </div>
 
-      {/* ── TARJA PRETA ABAIXO DO BOTÃO PROMOÇÃO ── */}
+      {/* ── TARJA PRETA 1 — abaixo do botão promoção ── */}
       <div
         style={{
           position: "fixed",
           bottom: 114,
+          left: "calc(50% + 44px)",
+          zIndex: 89,
+          width: 108,
+          height: 60,
+          background: "#000",
+          borderRadius: 14,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* ── TARJA PRETA 2 — 1mm abaixo da tarja 1 ── */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 50,
           left: "calc(50% + 44px)",
           zIndex: 89,
           width: 108,
