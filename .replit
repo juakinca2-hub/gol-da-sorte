@@ -22,6 +22,10 @@ timeoutMs = 20000
 localPort = 3000
 
 [[ports]]
+localPort = 3001
+externalPort = 80
+
+[[ports]]
 localPort = 8080
 
 [[ports]]
