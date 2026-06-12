@@ -932,7 +932,7 @@ export default function App() {
         onTouchEnd={(e) => { e.preventDefault(); setShowPromoModal(true); }}
         style={{
           position: "fixed",
-          bottom: 166,
+          bottom: 162,
           left: "calc(50% + 44px)",
           zIndex: 90,
           cursor: "pointer",
