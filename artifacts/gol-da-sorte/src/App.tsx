@@ -347,6 +347,7 @@ export default function App() {
   const [confettiActive, setConfettiActive] = useState(false);
   const [broadcastModal, setBroadcastModal] = useState<string | null>(null);
   const [megaActive, setMegaActive] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
   // Só mostra o botão Admin para quem acessou com ?admin=1 na URL
@@ -925,6 +926,179 @@ export default function App() {
       {showInviteScreen && userId && (
         <InviteScreen userId={userId} onClose={() => { setShowInviteScreen(false); refreshReferralCount(userId); }} />
       )}
+      {/* ── BOTÃO PROMOÇÃO 100 JOGADAS ── */}
+      <div
+        onClick={() => setShowPromoModal(true)}
+        onTouchEnd={(e) => { e.preventDefault(); setShowPromoModal(true); }}
+        style={{
+          position: "fixed",
+          bottom: 90,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 90,
+          cursor: "pointer",
+          background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
+          backgroundSize: "200% 200%",
+          border: "2.5px solid #FFD700",
+          borderRadius: 50,
+          padding: "10px 22px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          boxShadow: "0 0 20px 6px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5)",
+          animation: "promoPulse 1.6s ease-in-out infinite",
+          whiteSpace: "nowrap",
+          userSelect: "none",
+        }}
+      >
+        <span style={{ fontSize: Math.max(bounds.w * 0.040, 15) }}>🎁</span>
+        <span style={{
+          color: "#FFD700",
+          fontWeight: 900,
+          fontSize: Math.max(bounds.w * 0.034, 12),
+          letterSpacing: 0.8,
+          textShadow: "0 0 10px rgba(255,215,0,0.7), 0 1px 3px rgba(0,0,0,0.9)",
+          textTransform: "uppercase",
+        }}>
+          GANHE 100 JOGADAS GRÁTIS
+        </span>
+        <span style={{ fontSize: Math.max(bounds.w * 0.036, 13) }}>🏆</span>
+      </div>
+
+      {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
+      {showPromoModal && (
+        <div
+          onClick={() => setShowPromoModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 500,
+            background: "rgba(0,0,0,0.82)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(160deg, #0d0d0d, #1a0a00, #0d0d0d)",
+              border: "3px solid #FFD700",
+              borderRadius: 24,
+              padding: "28px 24px 24px",
+              maxWidth: 360,
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 0 60px 15px rgba(255,140,0,0.35), 0 0 120px 30px rgba(255,0,80,0.15)",
+              position: "relative",
+            }}
+          >
+            {/* Fechar */}
+            <button
+              onClick={() => setShowPromoModal(false)}
+              style={{
+                position: "absolute", top: 12, right: 14,
+                background: "none", border: "none", color: "#aaa",
+                fontSize: 22, cursor: "pointer", lineHeight: 1,
+              }}
+            >✕</button>
+
+            {/* Ícone */}
+            <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 8 }}>🎁🏆🎉</div>
+
+            {/* Título */}
+            <div style={{
+              color: "#FFD700",
+              fontSize: 22,
+              fontWeight: 900,
+              letterSpacing: 1,
+              textShadow: "0 0 20px rgba(255,200,0,0.6)",
+              marginBottom: 18,
+              textTransform: "uppercase",
+              lineHeight: 1.2,
+            }}>
+              GANHE 100<br />JOGADAS GRÁTIS!
+            </div>
+
+            {/* Cards das etapas */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
+
+              {/* Etapa 1 – 20 indicações */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(0,180,80,0.15), rgba(0,100,40,0.25))",
+                border: "1.5px solid rgba(0,220,100,0.5)",
+                borderRadius: 14,
+                padding: "12px 16px",
+                textAlign: "left",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 22 }}>🥈</span>
+                  <span style={{ color: "#7FFF00", fontWeight: 900, fontSize: 16 }}>20 INDICAÇÕES</span>
+                </div>
+                <div style={{ color: "#d4f7d4", fontSize: 13, lineHeight: 1.5 }}>
+                  Indique <strong style={{ color: "#7FFF00" }}>20 pessoas válidas</strong> e ganhe<br />
+                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+50 JOGADAS GRÁTIS</strong> na hora!
+                </div>
+              </div>
+
+              {/* Etapa 2 – 30 indicações */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(255,140,0,0.15), rgba(180,60,0,0.25))",
+                border: "1.5px solid rgba(255,180,0,0.6)",
+                borderRadius: 14,
+                padding: "12px 16px",
+                textAlign: "left",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 22 }}>🥇</span>
+                  <span style={{ color: "#FFD700", fontWeight: 900, fontSize: 16 }}>30 INDICAÇÕES EM 30 DIAS</span>
+                </div>
+                <div style={{ color: "#fff0cc", fontSize: 13, lineHeight: 1.5 }}>
+                  Indique <strong style={{ color: "#FFD700" }}>30 pessoas válidas</strong> em até 30 dias e ganhe<br />
+                  <strong style={{ color: "#FFD700", fontSize: 15 }}>+100 JOGADAS GRÁTIS!</strong>
+                </div>
+              </div>
+
+              {/* Bônus contínuo */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(100,0,200,0.15), rgba(60,0,120,0.25))",
+                border: "1.5px solid rgba(180,80,255,0.5)",
+                borderRadius: 14,
+                padding: "12px 16px",
+                textAlign: "left",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 22 }}>⭐</span>
+                  <span style={{ color: "#cc88ff", fontWeight: 900, fontSize: 15 }}>BÔNUS CONTÍNUO</span>
+                </div>
+                <div style={{ color: "#e8d4ff", fontSize: 13, lineHeight: 1.5 }}>
+                  Além disso, você continua ganhando<br />
+                  <strong style={{ color: "#cc88ff", fontSize: 15 }}>+3 JOGADAS</strong> por cada indicação válida!
+                </div>
+              </div>
+            </div>
+
+            {/* Botão compartilhar */}
+            <button
+              onClick={() => { setShowPromoModal(false); setShowInviteScreen(true); }}
+              style={{
+                width: "100%",
+                background: "linear-gradient(135deg, #ff6a00, #ee0979)",
+                border: "2px solid #FFD700",
+                borderRadius: 50,
+                color: "#FFD700",
+                fontWeight: 900,
+                fontSize: 15,
+                padding: "13px 0",
+                cursor: "pointer",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                boxShadow: "0 0 20px rgba(255,80,0,0.4)",
+              }}
+            >
+              🚀 QUERO PARTICIPAR AGORA!
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── PWA INSTALL PROMPT ── */}
       <InstallPrompt />
 
@@ -1121,6 +1295,11 @@ export default function App() {
           60%  { transform: scale(1.06) rotate(2deg); opacity: 1; }
           80%  { transform: scale(0.97) rotate(-1deg); }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes promoPulse {
+          0%   { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: translateX(-50%) scale(1); }
+          50%  { box-shadow: 0 0 32px 12px rgba(255,30,120,0.75), 0 4px 20px rgba(0,0,0,0.6); transform: translateX(-50%) scale(1.045); }
+          100% { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: translateX(-50%) scale(1); }
         }
       `}</style>
     </div>
