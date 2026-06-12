@@ -84,6 +84,22 @@ router.get("/broadcast", async (_req, res) => {
   }
 });
 
+// ── Últimos 4 Ganhadores (public) ────────────────────────────────────────────
+
+router.get("/ultimos-ganhadores", async (_req, res) => {
+  try {
+    const winners = await Promise.all([1, 2, 3, 4].map(async i => ({
+      nome: await getSetting(`gan${i}_nome`, ""),
+      cidadeEstado: await getSetting(`gan${i}_cidade_estado`, ""),
+      valor: await getSetting(`gan${i}_valor`, ""),
+      foto: await getSetting(`gan${i}_foto`, ""),
+    })));
+    res.json(winners);
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar ganhadores" });
+  }
+});
+
 // ── Promoção (public) ─────────────────────────────────────────────────────────
 
 router.get("/promocao", async (_req, res) => {

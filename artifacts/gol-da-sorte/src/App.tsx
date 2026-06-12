@@ -25,6 +25,23 @@ const UI = {
 
 type RowDef = { y: [number, number]; x: [number, number][]; label: string };
 
+interface WinnerCard { nome: string; cidadeEstado: string; valor: string; foto: string; }
+
+function WinnerCell({ w }: { w: WinnerCard }) {
+  return (
+    <div style={{ width: "50%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "3px 3px", gap: 1.5, boxSizing: "border-box" }}>
+      <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(255,215,0,0.5)", flexShrink: 0, background: "#1a1a30", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {w.foto
+          ? <img src={w.foto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: 10, lineHeight: 1 }}>👤</span>}
+      </div>
+      <span style={{ color: "#fff", fontSize: 6.5, fontWeight: 700, lineHeight: 1.2, textAlign: "center", width: "100%", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{w.nome || "—"}</span>
+      <span style={{ color: "#aaa", fontSize: 5.5, lineHeight: 1, textAlign: "center", width: "100%", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{w.cidadeEstado || ""}</span>
+      <span style={{ color: "#FFD700", fontSize: 7, fontWeight: 900, lineHeight: 1, textAlign: "center" }}>R$ {w.valor || "—"}</span>
+    </div>
+  );
+}
+
 const ROWS: RowDef[] = [
   { label: "R0", y: [0.771, 0.855], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
   { label: "R1", y: [0.661, 0.745], x: [[0.086, 0.191], [0.200, 0.304], [0.313, 0.415]] },
@@ -329,6 +346,8 @@ export default function App() {
   const [playsRemaining, setPlaysRemaining] = useState<number>(0);
   const [jogadasPop, setJogadasPop] = useState(false);
   const prevPlaysRef = useRef<number | null>(null);
+  const emptyWinner: WinnerCard = { nome: "", cidadeEstado: "", valor: "", foto: "" };
+  const [ganhadores, setGanhadores] = useState<WinnerCard[]>([emptyWinner, emptyWinner, emptyWinner, emptyWinner]);
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
@@ -427,7 +446,8 @@ export default function App() {
       apiCall("/settings/ultimo-ganhador"),
       apiCall("/settings/broadcast"),
       apiCall("/settings/promocao"),
-    ]).then(([valorData, ugData, broadcastData, promoData]) => {
+      apiCall("/settings/ultimos-ganhadores"),
+    ]).then(([valorData, ugData, broadcastData, promoData, ganhadoresData]) => {
       if (valorData?.valor) {
         const num = parseFloat(valorData.valor.replace(",", "."));
         if (!isNaN(num)) {
@@ -459,6 +479,9 @@ export default function App() {
           meta2Jogadas: promoData.meta2Jogadas || "100",
           bonusPorIndicacao: promoData.bonusPorIndicacao || "3",
         });
+      }
+      if (Array.isArray(ganhadoresData) && ganhadoresData.length === 4) {
+        setGanhadores(ganhadoresData);
       }
     });
   }, []);
@@ -1014,35 +1037,29 @@ export default function App() {
       </div>
       )}
 
-      {/* ── TARJA PRETA 1 — abaixo do botão promoção ── */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 114,
-          left: "calc(50% + 44px)",
-          zIndex: 89,
-          width: 108,
-          height: 60,
-          background: "#000",
-          borderRadius: 14,
-          pointerEvents: "none",
-        }}
-      />
+      {/* ── TARJA GANHADORES 1 (cima) — ganhadores[0] e [1] ── */}
+      <div style={{
+        position: "fixed", bottom: 114, left: "calc(50% + 44px)",
+        zIndex: 89, width: 108, height: 60,
+        background: "#000", borderRadius: 14,
+        pointerEvents: "none", display: "flex", overflow: "hidden",
+      }}>
+        <WinnerCell w={ganhadores[0]} />
+        <div style={{ width: 1, background: "#2a2a2a", flexShrink: 0, margin: "6px 0" }} />
+        <WinnerCell w={ganhadores[1]} />
+      </div>
 
-      {/* ── TARJA PRETA 2 — 1mm abaixo da tarja 1 ── */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 50,
-          left: "calc(50% + 44px)",
-          zIndex: 89,
-          width: 108,
-          height: 60,
-          background: "#000",
-          borderRadius: 14,
-          pointerEvents: "none",
-        }}
-      />
+      {/* ── TARJA GANHADORES 2 (baixo) — ganhadores[2] e [3] ── */}
+      <div style={{
+        position: "fixed", bottom: 50, left: "calc(50% + 44px)",
+        zIndex: 89, width: 108, height: 60,
+        background: "#000", borderRadius: 14,
+        pointerEvents: "none", display: "flex", overflow: "hidden",
+      }}>
+        <WinnerCell w={ganhadores[2]} />
+        <div style={{ width: 1, background: "#2a2a2a", flexShrink: 0, margin: "6px 0" }} />
+        <WinnerCell w={ganhadores[3]} />
+      </div>
 
       {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
       {showPromoModal && (
