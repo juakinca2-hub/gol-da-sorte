@@ -967,6 +967,21 @@ export default function App() {
         </span>
       </div>
 
+      {/* ── TARJA PRETA ABAIXO DO BOTÃO PROMOÇÃO ── */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 114,
+          left: "calc(50% + 44px)",
+          zIndex: 89,
+          width: 108,
+          height: 60,
+          background: "#000",
+          borderRadius: 14,
+          pointerEvents: "none",
+        }}
+      />
+
       {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
       {showPromoModal && (
         <div
