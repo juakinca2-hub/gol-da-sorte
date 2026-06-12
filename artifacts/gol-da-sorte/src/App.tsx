@@ -932,12 +932,12 @@ export default function App() {
         onTouchEnd={(e) => { e.preventDefault(); setShowPromoModal(true); }}
         style={{
           position: "fixed",
-          bottom: 158,
+          bottom: 166,
           left: "calc(50% + 44px)",
           zIndex: 90,
           cursor: "pointer",
           width: 100,
-          height: 88,
+          height: 72,
           background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
           border: "2.5px solid #FFD700",
           borderRadius: 14,
