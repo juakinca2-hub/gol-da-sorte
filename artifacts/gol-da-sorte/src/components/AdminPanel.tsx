@@ -72,6 +72,8 @@ interface GameSettings {
   valor_acumulado: string;
   valor_pago_premios: string;
   ug_nome: string;
+  ug_cidade: string;
+  ug_estado: string;
   ug_cidade_estado: string;
   ug_valor: string;
   ug_foto: string;
@@ -442,20 +444,83 @@ export default function AdminPanel({ onClose, skipAuth }: { onClose: () => void;
 
             {/* Último Ganhador */}
             <Card style={{ marginBottom: 12 }}>
-              <div style={{ color: C.purple, fontWeight: 700, marginBottom: 10, fontSize: 13 }}>🥇 Último Ganhador</div>
-              <Input label="Nome" value={settings.ug_nome || ""} onChange={v => setSettings(s => ({ ...s, ug_nome: v }))} />
-              <Input label="Cidade-Estado (Ex: Remanso-BA)" value={settings.ug_cidade_estado || ""} onChange={v => setSettings(s => ({ ...s, ug_cidade_estado: v }))} />
-              <Input label="Valor ganho (Ex: 385,00)" value={settings.ug_valor || ""} onChange={v => setSettings(s => ({ ...s, ug_valor: v }))} />
-              <div style={{ color: C.muted, fontSize: 11, marginBottom: 8 }}>Foto: cole URL ou base64</div>
-              <textarea value={settings.ug_foto || ""} onChange={e => setSettings(s => ({ ...s, ug_foto: e.target.value }))}
-                placeholder="URL ou base64 da foto..."
-                style={{ width: "100%", boxSizing: "border-box", background: "#1a1a25", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 12px", fontSize: 12, outline: "none", minHeight: 60, resize: "vertical", marginBottom: 8 }} />
-              <Btn label="Salvar Último Ganhador" color={C.purple} onClick={() => saveSettings({
-                ug_nome: settings.ug_nome || "",
-                ug_cidade_estado: settings.ug_cidade_estado || "",
-                ug_valor: settings.ug_valor || "",
-                ug_foto: settings.ug_foto || "",
-              })} />
+              <div style={{ color: C.purple, fontWeight: 700, marginBottom: 12, fontSize: 13 }}>🥇 Último Ganhador</div>
+
+              {/* Foto upload */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>FOTO DO GANHADOR</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: "50%", background: "#1a1a30",
+                    border: `2px solid ${C.border}`, overflow: "hidden", flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {settings.ug_foto
+                      ? <img src={settings.ug_foto} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontSize: 28 }}>👤</span>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{
+                      display: "block", width: "100%", boxSizing: "border-box",
+                      background: C.purple, border: "none", borderRadius: 8,
+                      color: "#fff", fontWeight: 700, fontSize: 13,
+                      padding: "10px 14px", cursor: "pointer", textAlign: "center",
+                    }}>
+                      📷 Escolher Foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = ev => {
+                            const img = new Image();
+                            img.onload = () => {
+                              const canvas = document.createElement("canvas");
+                              const MAX = 300;
+                              const ratio = Math.min(MAX / img.width, MAX / img.height);
+                              canvas.width = img.width * ratio;
+                              canvas.height = img.height * ratio;
+                              canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                              setSettings(s => ({ ...s, ug_foto: canvas.toDataURL("image/jpeg", 0.8) }));
+                            };
+                            img.src = ev.target?.result as string;
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                    {settings.ug_foto && (
+                      <button onClick={() => setSettings(s => ({ ...s, ug_foto: "" }))}
+                        style={{ marginTop: 6, width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, color: C.muted, fontSize: 12, padding: "6px", cursor: "pointer" }}>
+                        🗑️ Remover foto
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <Input label="Nome completo" value={settings.ug_nome || ""} onChange={v => setSettings(s => ({ ...s, ug_nome: v }))} />
+
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8 }}>
+                <Input label="Cidade" value={settings.ug_cidade || (settings.ug_cidade_estado || "").split("-")[0] || ""} onChange={v => setSettings(s => ({ ...s, ug_cidade: v }))} />
+                <Input label="Estado (sigla)" value={settings.ug_estado || (settings.ug_cidade_estado || "").split("-")[1] || ""} onChange={v => setSettings(s => ({ ...s, ug_estado: v.toUpperCase().slice(0, 2) }))} />
+              </div>
+
+              <Input label="Valor do prêmio (Ex: 1.250,00)" value={settings.ug_valor || ""} onChange={v => setSettings(s => ({ ...s, ug_valor: v }))} />
+
+              <Btn label="💾 Salvar Último Ganhador" color={C.purple} onClick={() => {
+                const cidade = settings.ug_cidade || (settings.ug_cidade_estado || "").split("-")[0] || "";
+                const estado = settings.ug_estado || (settings.ug_cidade_estado || "").split("-")[1] || "";
+                saveSettings({
+                  ug_nome: settings.ug_nome || "",
+                  ug_cidade_estado: `${cidade}-${estado}`,
+                  ug_valor: settings.ug_valor || "",
+                  ug_foto: settings.ug_foto || "",
+                });
+              }} />
             </Card>
 
             {/* Controle do jogo */}
