@@ -933,36 +933,38 @@ export default function App() {
         style={{
           position: "fixed",
           bottom: 90,
-          left: "50%",
-          transform: "translateX(-50%)",
+          right: 12,
           zIndex: 90,
           cursor: "pointer",
+          width: 88,
+          height: 88,
           background: "linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00)",
-          backgroundSize: "200% 200%",
           border: "2.5px solid #FFD700",
-          borderRadius: 50,
-          padding: "10px 22px",
+          borderRadius: 14,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 8,
+          justifyContent: "center",
+          gap: 3,
           boxShadow: "0 0 20px 6px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5)",
           animation: "promoPulse 1.6s ease-in-out infinite",
-          whiteSpace: "nowrap",
           userSelect: "none",
+          padding: 6,
         }}
       >
-        <span style={{ fontSize: Math.max(bounds.w * 0.040, 15) }}>🎁</span>
+        <span style={{ fontSize: 24, lineHeight: 1 }}>🎁</span>
         <span style={{
           color: "#FFD700",
           fontWeight: 900,
-          fontSize: Math.max(bounds.w * 0.034, 12),
-          letterSpacing: 0.8,
-          textShadow: "0 0 10px rgba(255,215,0,0.7), 0 1px 3px rgba(0,0,0,0.9)",
+          fontSize: 10,
+          letterSpacing: 0.3,
+          textShadow: "0 0 8px rgba(255,215,0,0.8), 0 1px 3px rgba(0,0,0,0.9)",
           textTransform: "uppercase",
+          textAlign: "center",
+          lineHeight: 1.25,
         }}>
-          GANHE 100 JOGADAS GRÁTIS
+          GANHE{"\n"}100 JOGADAS{"\n"}GRÁTIS
         </span>
-        <span style={{ fontSize: Math.max(bounds.w * 0.036, 13) }}>🏆</span>
       </div>
 
       {/* ── MODAL PROMOÇÃO 100 JOGADAS ── */}
@@ -1297,9 +1299,9 @@ export default function App() {
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
         @keyframes promoPulse {
-          0%   { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: translateX(-50%) scale(1); }
-          50%  { box-shadow: 0 0 32px 12px rgba(255,30,120,0.75), 0 4px 20px rgba(0,0,0,0.6); transform: translateX(-50%) scale(1.045); }
-          100% { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: translateX(-50%) scale(1); }
+          0%   { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: scale(1); }
+          50%  { box-shadow: 0 0 32px 12px rgba(255,30,120,0.75), 0 4px 20px rgba(0,0,0,0.6); transform: scale(1.06); }
+          100% { box-shadow: 0 0 18px 5px rgba(255,80,0,0.55), 0 4px 16px rgba(0,0,0,0.5); transform: scale(1); }
         }
       `}</style>
     </div>
