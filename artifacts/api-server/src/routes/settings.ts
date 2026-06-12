@@ -70,4 +70,18 @@ router.post("/ultimo-ganhador", async (req, res) => {
   }
 });
 
+// ── Broadcast message (public) ────────────────────────────────────────────────
+
+router.get("/broadcast", async (_req, res) => {
+  try {
+    const [message, broadcastId] = await Promise.all([
+      getSetting("broadcast_message", ""),
+      getSetting("broadcast_id", ""),
+    ]);
+    res.json({ message, broadcastId });
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar mensagem" });
+  }
+});
+
 export default router;

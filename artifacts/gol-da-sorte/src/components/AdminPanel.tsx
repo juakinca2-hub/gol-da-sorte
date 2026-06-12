@@ -64,6 +64,8 @@ interface UserRow {
 }
 
 interface GameSettings {
+  broadcast_message: string;
+  broadcast_id: string;
   premiacao_ativa: string;
   bonus_row3: string;
   bonus_row4: string;
@@ -550,6 +552,44 @@ export default function AdminPanel({ onClose, skipAuth }: { onClose: () => void;
                 bonus_row4: settings.bonus_row4 || "5",
                 bonus_row5: settings.bonus_row5 || "15",
               })} />
+            </Card>
+
+            {/* Mensagem para todos */}
+            <Card style={{ marginBottom: 12 }}>
+              <div style={{ color: "#f97316", fontWeight: 700, marginBottom: 10, fontSize: 13 }}>📢 Mensagem para Todos os Jogadores</div>
+              <div style={{ color: C.muted, fontSize: 11, marginBottom: 8 }}>
+                Ao enviar, todos os jogadores verão esta mensagem na próxima vez que abrirem o app.
+              </div>
+              <textarea
+                value={settings.broadcast_message || ""}
+                onChange={e => setSettings(s => ({ ...s, broadcast_message: e.target.value }))}
+                placeholder="Ex: 🎉 Novidade! Agora você pode ganhar bônus por indicar amigos. Convide já!"
+                rows={4}
+                style={{
+                  width: "100%", boxSizing: "border-box", background: "#1a1a25",
+                  border: `1px solid ${C.border}`, borderRadius: 8, color: C.text,
+                  padding: "10px 12px", fontSize: 13, outline: "none",
+                  resize: "vertical", marginBottom: 8, fontFamily: "inherit",
+                }}
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <Btn
+                  label="📤 Enviar para Todos"
+                  color="#f97316"
+                  onClick={() => saveSettings({
+                    broadcast_message: settings.broadcast_message || "",
+                    broadcast_id: String(Date.now()),
+                  })}
+                />
+                <Btn
+                  label="🗑️ Apagar Mensagem"
+                  color="#555"
+                  onClick={() => {
+                    setSettings(s => ({ ...s, broadcast_message: "" }));
+                    saveSettings({ broadcast_message: "", broadcast_id: "" });
+                  }}
+                />
+              </div>
             </Card>
 
             {/* WhatsApp atendimento */}

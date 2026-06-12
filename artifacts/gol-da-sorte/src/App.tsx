@@ -345,6 +345,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [bonusCelebration, setBonusCelebration] = useState<{ amount: number; big: boolean } | null>(null);
   const [confettiActive, setConfettiActive] = useState(false);
+  const [broadcastModal, setBroadcastModal] = useState<string | null>(null);
   const [megaActive, setMegaActive] = useState(false);
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
@@ -411,7 +412,8 @@ export default function App() {
     Promise.all([
       apiCall("/settings/valor-acumulado"),
       apiCall("/settings/ultimo-ganhador"),
-    ]).then(([valorData, ugData]) => {
+      apiCall("/settings/broadcast"),
+    ]).then(([valorData, ugData, broadcastData]) => {
       if (valorData?.valor) {
         const num = parseFloat(valorData.valor.replace(",", "."));
         if (!isNaN(num)) {
@@ -425,6 +427,12 @@ export default function App() {
           valor: ugData.valor ?? "",
           foto: ugData.foto ?? "",
         });
+      }
+      if (broadcastData?.broadcastId && broadcastData.message) {
+        const seen = localStorage.getItem("seenBroadcastId");
+        if (seen !== broadcastData.broadcastId) {
+          setBroadcastModal(broadcastData.message);
+        }
       }
     });
   }, []);
@@ -1037,6 +1045,56 @@ export default function App() {
 
       {/* ── PAINEL ADMIN ── */}
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} skipAuth={isAdminMode} />}
+
+      {/* Modal de mensagem broadcast */}
+      {broadcastModal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 2147483640,
+          background: "rgba(0,0,0,0.75)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "24px",
+        }}>
+          <div style={{
+            background: "#1a1a2e", border: "2px solid #f97316",
+            borderRadius: 18, maxWidth: 360, width: "100%",
+            padding: "28px 24px", textAlign: "center",
+            boxShadow: "0 0 40px rgba(249,115,22,0.35)",
+          }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>📢</div>
+            <div style={{
+              color: "#f97316", fontWeight: 800, fontSize: 16,
+              marginBottom: 14, letterSpacing: 0.5,
+            }}>
+              Aviso do Organizador
+            </div>
+            <div style={{
+              color: "#e5e5e5", fontSize: 14, lineHeight: 1.6,
+              marginBottom: 24, whiteSpace: "pre-wrap",
+            }}>
+              {broadcastModal}
+            </div>
+            <button
+              onClick={() => {
+                const seen = localStorage.getItem("seenBroadcastId");
+                apiCall("/settings/broadcast").then(data => {
+                  if (data?.broadcastId) {
+                    localStorage.setItem("seenBroadcastId", data.broadcastId);
+                  }
+                });
+                setBroadcastModal(null);
+              }}
+              style={{
+                background: "#f97316", color: "#fff", border: "none",
+                borderRadius: 12, padding: "13px 36px", fontSize: 15,
+                fontWeight: 700, cursor: "pointer", width: "100%",
+                letterSpacing: 0.4,
+              }}
+            >
+              Entendido ✓
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Botão Admin — visível só para quem acessou com ?admin=1 */}
       {isAdminMode && (
