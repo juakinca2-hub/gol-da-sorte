@@ -330,7 +330,10 @@ export default function App() {
   const [referralUnlocked, setReferralUnlocked] = useState(false);
   const [totalFriends, setTotalFriends] = useState<number>(0);
   const [valorAcumulado, setValorAcumulado] = useState<string>("0,00");
-  const [showAdmin, setShowAdmin] = useState(() => new URLSearchParams(window.location.search).get("admin") === "1");
+  const [showAdmin, setShowAdmin] = useState(() =>
+    new URLSearchParams(window.location.search).get("admin") === "1" ||
+    window.location.hash === "#admin"
+  );
   const adminTapCount = useRef(0);
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ultimoGanhador, setUltimoGanhador] = useState<{
@@ -346,7 +349,10 @@ export default function App() {
 
   const referralCodeFromUrl = getReferralCodeFromUrl();
   // Só mostra o botão Admin para quem acessou com ?admin=1 na URL
-  const isAdminMode = useRef(new URLSearchParams(window.location.search).get("admin") === "1").current;
+  const isAdminMode = useRef(
+    new URLSearchParams(window.location.search).get("admin") === "1" ||
+    window.location.hash === "#admin"
+  ).current;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -556,7 +562,7 @@ export default function App() {
     showToast(`✅ Compra realizada! ${newPlays} jogadas disponíveis.`);
   };
 
-  if (showAdmin) return <AdminPanel onClose={() => { setShowAdmin(false); window.history.replaceState({}, "", window.location.pathname); }} skipAuth={isAdminMode} />;
+  if (showAdmin) return <AdminPanel onClose={() => { setShowAdmin(false); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} skipAuth={isAdminMode} />;
 
   if (!userLoaded) return null;
   if (!userId) {
