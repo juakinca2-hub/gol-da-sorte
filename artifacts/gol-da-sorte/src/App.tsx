@@ -650,49 +650,56 @@ export default function App() {
 
 
       {/* ══════════════════════════════════════════════
-          JOGADAS counter — real play count
-          ══════════════════════════════════════════════ */}
-      <div
-        style={{
-          ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w, UI.jogadasNum.h),
-          zIndex: 30,
-          background: DEBUG ? "rgba(0,255,0,0.3)" : "rgba(10,8,4,0.82)",
-          borderRadius: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: DEBUG ? "2px solid lime" : "none",
-          pointerEvents: "none",
-        }}
-      >
-        <span style={{
-          color: "#FFD700",
-          fontWeight: 900,
-          fontSize: numFontSize,
-          lineHeight: 1,
-          textShadow: "0 0 8px rgba(255,200,0,0.6)",
-          letterSpacing: 1,
-        }}>
-          {playsRemaining}
-        </span>
-      </div>
-
-      {/* ══════════════════════════════════════════════
-          "+" button area — buy more plays
-          Positioned right of JOGADAS number
+          JOGADAS — botão contador + comprar mais
+          Cobre jogadasNum + jogadasPlus (x: 0.675→0.875)
           ══════════════════════════════════════════════ */}
       <div
         onClick={() => setShowPurchaseModal(true)}
         onTouchEnd={(e) => { e.preventDefault(); setShowPurchaseModal(true); }}
         style={{
-          ...ov(UI.jogadasPlus.x, UI.jogadasPlus.y, UI.jogadasPlus.w, UI.jogadasPlus.h),
+          ...ov(UI.jogadasNum.x, UI.jogadasNum.y, UI.jogadasNum.w + UI.jogadasPlus.w, UI.jogadasNum.h),
           zIndex: 30,
           cursor: "pointer",
-          background: DEBUG ? "rgba(255,165,0,0.4)" : "transparent",
-          border: DEBUG ? "2px solid orange" : "none",
-          borderRadius: 4,
+          background: playsRemaining <= 0
+            ? "linear-gradient(135deg, #3a0000, #1a0000)"
+            : "linear-gradient(135deg, #0a1a00, #0d2800)",
+          border: playsRemaining <= 0
+            ? "1.5px solid rgba(255,60,0,0.7)"
+            : "1.5px solid rgba(100,220,0,0.6)",
+          borderRadius: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 0,
+          boxShadow: playsRemaining <= 0
+            ? "0 0 10px rgba(255,40,0,0.3)"
+            : "0 0 10px rgba(80,200,0,0.25)",
         }}
-      />
+      >
+        <span style={{
+          color: playsRemaining <= 0 ? "rgba(255,120,60,0.9)" : "rgba(120,220,80,0.9)",
+          fontWeight: 800,
+          fontSize: Math.max(bounds.w * 0.018, 7),
+          lineHeight: 1,
+          letterSpacing: 0.5,
+          textTransform: "uppercase",
+        }}>
+          JOGADAS
+        </span>
+        <span style={{
+          color: playsRemaining <= 0 ? "#ff4422" : "#FFD700",
+          fontWeight: 900,
+          fontSize: numFontSize,
+          lineHeight: 1.1,
+          textShadow: playsRemaining <= 0
+            ? "0 0 8px rgba(255,60,0,0.7)"
+            : "0 0 8px rgba(255,200,0,0.6)",
+          letterSpacing: 1,
+        }}>
+          {playsRemaining}
+        </span>
+      </div>
 
       {/* ══════════════════════════════════════════════
           VALOR ACUMULADO — overlay dinâmico sobre a imagem de fundo
