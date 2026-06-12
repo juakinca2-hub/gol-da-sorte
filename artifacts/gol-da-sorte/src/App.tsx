@@ -1029,12 +1029,14 @@ export default function App() {
         <span style={{
           color: "#FFD700",
           fontWeight: 900,
-          fontSize: 10,
+          fontSize: 8.5,
           letterSpacing: 0.3,
           textShadow: "0 0 8px rgba(255,215,0,0.8), 0 1px 3px rgba(0,0,0,0.9)",
           textTransform: "uppercase",
           textAlign: "center",
           lineHeight: 1.25,
+          position: "relative",
+          bottom: "1mm",
         }}>
           {promoConfig.titulo}
         </span>
