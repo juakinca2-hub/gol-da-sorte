@@ -556,7 +556,7 @@ export default function App() {
     showToast(`✅ Compra realizada! ${newPlays} jogadas disponíveis.`);
   };
 
-  if (showAdmin) return <AdminPanel onClose={() => { setShowAdmin(false); window.history.replaceState({}, "", window.location.pathname); }} />;
+  if (showAdmin) return <AdminPanel onClose={() => { setShowAdmin(false); window.history.replaceState({}, "", window.location.pathname); }} skipAuth={isAdminMode} />;
 
   if (!userLoaded) return null;
   if (!userId) {
@@ -1030,7 +1030,7 @@ export default function App() {
       )}
 
       {/* ── PAINEL ADMIN ── */}
-      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} skipAuth={isAdminMode} />}
 
       {/* Botão Admin — visível só para quem acessou com ?admin=1 */}
       {isAdminMode && (
