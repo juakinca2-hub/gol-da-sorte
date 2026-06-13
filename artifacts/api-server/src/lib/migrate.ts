@@ -70,4 +70,18 @@ export async function runMigrations() {
   await db.execute(sql`INSERT INTO settings (key, value) VALUES ('bonus_row5', '15')             ON CONFLICT (key) DO NOTHING`);
   await db.execute(sql`INSERT INTO settings (key, value) VALUES ('whatsapp_atendimento', '')     ON CONFLICT (key) DO NOTHING`);
   await db.execute(sql`INSERT INTO settings (key, value) VALUES ('valor_pago_premios', '0')      ON CONFLICT (key) DO NOTHING`);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS payments (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      plays INTEGER NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      tx_id TEXT NOT NULL UNIQUE,
+      mp_payment_id TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      confirmed_at TIMESTAMP
+    )
+  `);
 }
