@@ -743,6 +743,25 @@ export default function App() {
         </span>
       </div>
 
+      {/* ── VIDEO PROMO — 2mm à esquerda do contador de jogadas ── */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        src="/video-promo.mp4"
+        style={{
+          position: "absolute",
+          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 2mm)`,
+          left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px - 6mm)`,
+          width: `${bounds.w * 0.18}px`,
+          height: `calc(${bounds.h * UI.jogadasNum.h}px + 4mm)`,
+          zIndex: 30,
+          borderRadius: 8,
+          objectFit: "cover",
+        }}
+      />
+
       {/* ══════════════════════════════════════════════
           VALOR ACUMULADO — overlay dinâmico sobre a imagem de fundo
           Posição: painel direito, xF≈0.555-0.970, yF≈0.218-0.258
