@@ -373,6 +373,8 @@ export default function App() {
   const [broadcastModal, setBroadcastModal] = useState<string | null>(null);
   const [megaActive, setMegaActive] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [promoConfig, setPromoConfig] = useState({
     ativa: true,
     titulo: "GANHE 100 JOGADAS GRÁTIS",
@@ -743,13 +745,8 @@ export default function App() {
         </span>
       </div>
 
-      {/* ── VIDEO PROMO — 2mm à esquerda do contador de jogadas ── */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        src="/video-promo.mp4"
+      {/* ── VIDEO PROMO — parado por padrão, usuário dá play ── */}
+      <div
         style={{
           position: "absolute",
           top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 12mm - 48px)`,
@@ -758,9 +755,64 @@ export default function App() {
           height: 108,
           zIndex: 30,
           borderRadius: 8,
-          objectFit: "cover",
+          overflow: "hidden",
+          cursor: "pointer",
         }}
-      />
+        onClick={() => {
+          const v = videoRef.current;
+          if (!v) return;
+          if (v.paused) {
+            v.play();
+            setVideoPlaying(true);
+          } else {
+            v.pause();
+            setVideoPlaying(false);
+          }
+        }}
+      >
+        <video
+          ref={videoRef}
+          loop
+          playsInline
+          src="/video-promo.mp4"
+          onEnded={() => setVideoPlaying(false)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
+        {!videoPlaying && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.45)",
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "rgba(255,215,0,0.92)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.5)",
+              }}
+            >
+              <svg width="16" height="18" viewBox="0 0 16 18" fill="none">
+                <path d="M2 1.5L14 9L2 16.5V1.5Z" fill="#111" />
+              </svg>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ══════════════════════════════════════════════
           VALOR ACUMULADO — overlay dinâmico sobre a imagem de fundo
