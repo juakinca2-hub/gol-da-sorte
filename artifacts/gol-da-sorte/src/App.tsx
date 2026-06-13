@@ -749,7 +749,7 @@ export default function App() {
       <div
         style={{
           position: "absolute",
-          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 18mm - 48px)`,
+          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 19mm - 48px)`,
           left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px + 11mm)`,
           width: "calc(108px + 2mm)",
           height: "calc(108px + 3mm)",
