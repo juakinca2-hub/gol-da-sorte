@@ -19,6 +19,7 @@ if (Number.isNaN(port) || port <= 0) {
 runMigrations()
   .then(() => {
     logger.info("Database migrations completed (v2)");
+    logger.info({ mp_configured: !!process.env["MP_ACCESS_TOKEN"] }, "Payment config status");
     app.listen(port, (err) => {
       if (err) {
         logger.error({ err }, "Error listening on port");

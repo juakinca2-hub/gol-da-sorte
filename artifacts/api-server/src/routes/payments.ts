@@ -5,13 +5,12 @@ import { MercadoPagoConfig, Payment } from "mercadopago";
 
 const router = Router();
 
-const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? "";
-
 const PACKAGES: Record<number, number> = { 5: 500, 15: 1000, 30: 2000 };
 
 function getMpClient() {
-  if (!MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN não configurado.");
-  return new MercadoPagoConfig({ accessToken: MP_ACCESS_TOKEN });
+  const token = process.env.MP_ACCESS_TOKEN ?? "";
+  if (!token) throw new Error("MP_ACCESS_TOKEN não configurado.");
+  return new MercadoPagoConfig({ accessToken: token });
 }
 
 // ── Criar pagamento PIX via Mercado Pago ──────────────────────────────────────
@@ -31,7 +30,7 @@ router.post("/create", async (req, res) => {
     return;
   }
 
-  if (!MP_ACCESS_TOKEN) {
+  if (!process.env.MP_ACCESS_TOKEN) {
     res.status(503).json({ error: "Pagamento não configurado. Fale com o administrador." });
     return;
   }
