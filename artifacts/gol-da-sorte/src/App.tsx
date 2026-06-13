@@ -753,7 +753,7 @@ export default function App() {
         style={{
           position: "absolute",
           top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 2mm)`,
-          left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px - 6mm)`,
+          left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px + 34mm)`,
           width: `${bounds.w * 0.18}px`,
           height: `calc(${bounds.h * UI.jogadasNum.h}px + 4mm)`,
           zIndex: 30,
