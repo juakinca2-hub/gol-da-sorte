@@ -749,10 +749,10 @@ export default function App() {
       <div
         style={{
           position: "absolute",
-          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 12mm - 48px)`,
-          left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px + 12mm)`,
-          width: "calc(108px + 1mm)",
-          height: 108,
+          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 15mm - 48px)`,
+          left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px + 11mm)`,
+          width: "calc(108px + 2mm)",
+          height: "calc(108px + 3mm)",
           zIndex: 30,
           borderRadius: 8,
           overflow: "hidden",
