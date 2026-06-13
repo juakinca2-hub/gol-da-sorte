@@ -53,7 +53,12 @@ router.post("/create", async (req, res) => {
           last_name: user.name.split(" ").slice(1).join(" ") || "GolDaSorte",
         },
         external_reference: txId,
-        notification_url: `${process.env.APP_URL ?? ""}/api/payments/webhook`,
+        notification_url: `${
+          process.env.API_PUBLIC_URL
+          ?? (process.env.REPLIT_DEV_DOMAIN
+            ? `https://${process.env.PORT ?? "8081"}-${process.env.REPLIT_DEV_DOMAIN}`
+            : process.env.APP_URL ?? "")
+        }/api/payments/webhook`,
       },
     });
 
@@ -110,7 +115,7 @@ router.get("/:txId/status", async (req, res) => {
   }
 
   // Consulta o Mercado Pago para status atualizado
-  if (payment.mpPaymentId && MP_ACCESS_TOKEN) {
+  if (payment.mpPaymentId && process.env.MP_ACCESS_TOKEN) {
     try {
       const client = getMpClient();
       const paymentClient = new Payment(client);
@@ -139,7 +144,7 @@ router.post("/webhook", async (req, res) => {
     // Formato novo (notifications v2)
     if (body.type === "payment" && body.data) {
       const mpId = (body.data as Record<string, unknown>).id;
-      if (mpId && MP_ACCESS_TOKEN) {
+      if (mpId && process.env.MP_ACCESS_TOKEN) {
         const client = getMpClient();
         const paymentClient = new Payment(client);
         const mpPayment = await paymentClient.get({ id: Number(mpId) });
