@@ -18,7 +18,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 runMigrations()
   .then(() => {
-    logger.info("Database migrations completed");
+    logger.info("Database migrations completed (v2)");
     app.listen(port, (err) => {
       if (err) {
         logger.error({ err }, "Error listening on port");
