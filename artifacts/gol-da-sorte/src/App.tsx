@@ -752,10 +752,10 @@ export default function App() {
         src="/video-promo.mp4"
         style={{
           position: "absolute",
-          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 12mm)`,
+          top: `calc(${bounds.y + bounds.h * UI.jogadasNum.y}px - 12mm - 48px)`,
           left: `calc(${bounds.x + bounds.w * (UI.jogadasNum.x - 0.18)}px + 34mm)`,
           width: 108,
-          height: 60,
+          height: 108,
           zIndex: 30,
           borderRadius: 8,
           objectFit: "cover",
